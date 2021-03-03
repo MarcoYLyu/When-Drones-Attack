@@ -18,7 +18,7 @@ export class Background extends Scene {
         super();
         this.shapes = {
             ground: new Square(),
-            background: new Square(),
+            background: new defs.Subdivision_Sphere(4),
             volcano: new Shape_From_File("assets/mount.obj")
         }
         this.shapes.ground.arrays.texture_coord.forEach( (v, i, l) =>
@@ -63,7 +63,7 @@ export class Background extends Scene {
         }
 
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 100);
+            Math.PI / 4, context.width / context.height, 1, 500);
 
         const light_position = vec4(10, 10, 10, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
@@ -74,7 +74,7 @@ export class Background extends Scene {
             .times(Mat4.scale(100, 50, 55));
         this.shapes.ground.draw(context, program_state, ground_trans, this.materials.ground_texture)
 
-        let back_trans = Mat4.translation(0,0,-50).times(Mat4.scale(100,100, 100))
+        let back_trans = Mat4.translation(0, 0, 0).times(Mat4.scale(250,250,250))
         this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
         /*
         let back_trans = Mat4.identity();
