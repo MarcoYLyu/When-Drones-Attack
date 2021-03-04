@@ -23,8 +23,8 @@ export class Background extends Scene {
             island: new Shape_From_File("assets/ground.obj"),
             sky: new Shape_From_File("assets/sky.obj")
         }
-        this.shapes.island.arrays.texture_coord.forEach( (v, i, l) =>
-            l[i] = vec(200*v[0], 100*v[1]))
+        //this.shapes.island.arrays.texture_coord.forEach( (v, i, l) =>
+        //    l[i] = vec(200*v[0], 100*v[1]))
 
         this.materials = {
             phong: new Material(new defs.Phong_Shader(), {
@@ -46,13 +46,13 @@ export class Background extends Scene {
                 texture: new Texture("assets/sky.jpg")
             }),
         }
-        this.vol = new Material(new Textured_Phong(), {
-            color: hex_color("#0b9451"),
-            ambient: .6, diffusivity: .3, specularity: .3, texture: new Texture("assets/gray.jpg")
+        this.vol = new Material(new defs.Phong_Shader(), {
+            color: hex_color("#208f52"),
+            ambient: .6, diffusivity: .3, specularity: .3,
         });
-        this.island = new Material(new Textured_Phong(), {
+        this.island = new Material(new defs.Phong_Shader(), {
             color: hex_color("#83a945"),
-            ambient: .4, diffusivity: 1, specularity: .5, texture: new Texture("assets/gray.jpg")
+            ambient: .4, diffusivity: 1, specularity: .5,
         });
         this.sky = new Material(new Textured_Phong(), {
             color: hex_color("#000000"),
@@ -74,24 +74,20 @@ export class Background extends Scene {
         }
 
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 500);
-
-        const light_position = vec4(10, 30, 10, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
-
+            Math.PI / 4, context.width / context.height, 1, 1000);
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-
-        let ground_trans = Mat4.rotation(Math.PI / 2, 1, 0, 0)
-            .times(Mat4.scale(100, 50, 55));
-
-
-
+        const light_position = vec4(10, 30, 10, 1);
+        /* Sun rotation
+        let light_trans = Mat4.rotation(t, 1, 0, 0)
+        let light_position = light_trans.times(vec4(-20, 50, 0, 1));
+        */
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
 
         let vol_trans = Mat4.translation(-15, 8, -20).times(Mat4.scale(15, 15, 15))
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol)
         let island_trans = Mat4.scale(30, 30, 30)
         this.shapes.island.draw(context, program_state, island_trans, this.island)
-        this.sky_trans = Mat4.translation(0, 30, 0).times(Mat4.scale(200, 200, 200))
+        this.sky_trans = Mat4.translation(0, 30, 0).times(Mat4.scale(400, 400, 400))
         this.shapes.sky.draw(context, program_state, this.sky_trans, this.sky)
 
     }
