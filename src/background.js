@@ -19,23 +19,26 @@ export class Background extends Scene {
         this.shapes = {
             ground: new Square(),
             background: new Square(),
-            volcano: new Shape_From_File("assets/mount.obj")
+            volcano: new Shape_From_File("assets/mount.obj"),
+            island: new Shape_From_File("assets/ground.obj"),
+            sky: new Shape_From_File("assets/sky.obj")
         }
-        this.shapes.ground.arrays.texture_coord.forEach( (v, i, l) =>
-            l[i] = vec(20*v[0], 10*v[1]))
+        this.shapes.island.arrays.texture_coord.forEach( (v, i, l) =>
+            l[i] = vec(200*v[0], 100*v[1]))
 
         this.materials = {
-            phong: new Material(new Textured_Phong(), {
-                color: hex_color("#70734f")
+            phong: new Material(new defs.Phong_Shader(), {
+                color: hex_color("#decafb"),
+                ambient: 1, diffusivity: 1, specularity: 1,
             }),
             face: new Material(new Textured_Phong(), {
                 color: hex_color("#ddd6c3"),
                 ambient: 0.7, diffusivity: 0.8
             }),
             ground_texture: new Material(new Textured_Phong(), {
-                color: hex_color("#000000"),
-                ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/grass.jpg")
+                color: hex_color("#835846"),
+                ambient: 0.7, diffusivity: 0.1, specularity: 0.1,
+                //texture: new Texture("assets/grass.jpg")
             }),
             bg: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
@@ -43,9 +46,17 @@ export class Background extends Scene {
                 texture: new Texture("assets/sky.jpg")
             }),
         }
-        this.vol = new Material(new defs.Textured_Phong(1), {
-            color: color(.5, .5, .5, 1),
-            ambient: .3, diffusivity: .5, specularity: .5, texture: new Texture("assets/rock.jpg")
+        this.vol = new Material(new Textured_Phong(), {
+            color: hex_color("#0b9451"),
+            ambient: .6, diffusivity: .3, specularity: .3, texture: new Texture("assets/gray.jpg")
+        });
+        this.island = new Material(new Textured_Phong(), {
+            color: hex_color("#83a945"),
+            ambient: .4, diffusivity: 1, specularity: .5, texture: new Texture("assets/gray.jpg")
+        });
+        this.sky = new Material(new Textured_Phong(), {
+            color: hex_color("#000000"),
+            ambient: 1, diffusivity: 1, specularity: .1, texture: new Texture("assets/sky.jpg")
         });
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -63,31 +74,25 @@ export class Background extends Scene {
         }
 
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 100);
+            Math.PI / 4, context.width / context.height, 1, 500);
 
-        const light_position = vec4(10, 10, 10, 1);
+        const light_position = vec4(10, 30, 10, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         let ground_trans = Mat4.rotation(Math.PI / 2, 1, 0, 0)
             .times(Mat4.scale(100, 50, 55));
-        this.shapes.ground.draw(context, program_state, ground_trans, this.materials.ground_texture)
 
-        let back_trans = Mat4.translation(0,0,-50).times(Mat4.scale(100,100, 100))
-        this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
-        /*
-        let back_trans = Mat4.identity();
-        let screens = 40.0;
-        for (let i = 0; i < screens; i++) {
-            back_trans = Mat4.rotation(Math.PI * i / (screens-1) - Math.PI / 2, 0, 1, 0)
-                .times(Mat4.translation(0,10, -50))
-                .times(Mat4.scale(50 * Math.tan(Math.PI / (2 * (screens-1))), 20, 20))
-            this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
-        }
-        */
 
-        let vol_trans = Mat4.translation(0, 12, -40).times(Mat4.scale(30, 30, 30))
+
+
+        let vol_trans = Mat4.translation(-15, 8, -20).times(Mat4.scale(15, 15, 15))
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol)
+        let island_trans = Mat4.scale(30, 30, 30)
+        this.shapes.island.draw(context, program_state, island_trans, this.island)
+        this.sky_trans = Mat4.translation(0, 30, 0).times(Mat4.scale(200, 200, 200))
+        this.shapes.sky.draw(context, program_state, this.sky_trans, this.sky)
+
     }
 }
