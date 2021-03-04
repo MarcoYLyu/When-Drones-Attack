@@ -17,6 +17,7 @@ export class Background extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.shapes = {
+            ball: new Cube(),
             ground: new Square(),
             background: new Square(),
             volcano: new Shape_From_File("assets/mount.obj"),
@@ -28,8 +29,12 @@ export class Background extends Scene {
 
         this.materials = {
             phong: new Material(new defs.Phong_Shader(), {
-                color: hex_color("#decafb"),
+                color: hex_color("#f5f53c"),
                 ambient: 1, diffusivity: 1, specularity: 1,
+            }),
+            water: new Material(new defs.Phong_Shader(), {
+                color: hex_color("#2a7ed0"),
+                ambient: 1, diffusivity: .2, specularity: .2,
             }),
             face: new Material(new Textured_Phong(), {
                 color: hex_color("#ddd6c3"),
@@ -47,7 +52,7 @@ export class Background extends Scene {
             }),
         }
         this.vol = new Material(new defs.Phong_Shader(), {
-            color: hex_color("#208f52"),
+            color: hex_color("#208f52"), //#208f52
             ambient: .6, diffusivity: .3, specularity: .3,
         });
         this.island = new Material(new defs.Phong_Shader(), {
@@ -59,7 +64,7 @@ export class Background extends Scene {
             ambient: 1, diffusivity: 1, specularity: .1, texture: new Texture("assets/sky.jpg")
         });
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 50, 100), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -76,12 +81,21 @@ export class Background extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 1000);
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        const light_position = vec4(10, 30, 10, 1);
-        /* Sun rotation
-        let light_trans = Mat4.rotation(t, 1, 0, 0)
-        let light_position = light_trans.times(vec4(-20, 50, 0, 1));
-        */
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
+        //const light_position = vec4(10, 30, 10, 1);
+        // Sun rotation
+        let light_trans = Mat4.rotation(t/3, 0, 1, 0)
+        let light_position = light_trans.times(vec4(-50, 30, 0, 1));
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)];
+
+        let ball_trans = Mat4.rotation(t/3, 0, 1, 0)
+            .times(Mat4.translation(-60, 30, 0))
+            .times(Mat4.scale(3, 3, 3))
+        this.shapes.ball.draw(context, program_state, ball_trans, this.materials.phong)
+
+        let lake_trans = Mat4.translation(-19, -3.5, -3)
+            .times(Mat4.scale(20, 5, 14))
+        this.shapes.ball.draw(context, program_state, lake_trans, this.materials.water)
+
 
         let vol_trans = Mat4.translation(-15, 8, -20).times(Mat4.scale(15, 15, 15))
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol)
