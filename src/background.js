@@ -32,9 +32,9 @@ export class Background extends Scene {
                 color: hex_color("#f5f53c"),
                 ambient: 1, diffusivity: 1, specularity: 1,
             }),
-            water: new Material(new defs.Phong_Shader(), {
-                color: hex_color("#2a7ed0"),
-                ambient: 1, diffusivity: .2, specularity: .2,
+            water: new Material(new Textured_Phong(), {
+                color: hex_color("#2a46e2"),
+                ambient: .4, diffusivity: .5, specularity: .5, texture: new Texture("assets/lake.png")
             }),
             face: new Material(new Textured_Phong(), {
                 color: hex_color("#ddd6c3"),
@@ -51,13 +51,13 @@ export class Background extends Scene {
                 texture: new Texture("assets/sky.jpg")
             }),
         }
-        this.vol = new Material(new defs.Phong_Shader(), {
-            color: hex_color("#208f52"), //#208f52
-            ambient: .6, diffusivity: .3, specularity: .3,
+        this.vol = new Material(new Textured_Phong(), {
+            color: hex_color("#8c4100"), //#208f52
+            ambient: .4, diffusivity: .6, specularity: .5, texture: new Texture("assets/mount.png")
         });
-        this.island = new Material(new defs.Phong_Shader(), {
-            color: hex_color("#83a945"),
-            ambient: .4, diffusivity: 1, specularity: .5,
+        this.island = new Material(new Textured_Phong(), {
+            color: hex_color("#708a04"),
+            ambient: .4, diffusivity: .6, specularity: .5, texture: new Texture("assets/land.png")
         });
         this.sky = new Material(new Textured_Phong(), {
             color: hex_color("#000000"),
