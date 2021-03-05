@@ -7,7 +7,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
-const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube, Square} = defs
+const {Axis_Arrows, Textured_Phong, Phong_Shader, Regular_2D_Polygon, Cube, Square} = defs
 const {Roof, House} = comps;
 
 export class Background extends Scene {
@@ -59,10 +59,10 @@ export class Background extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/grass.jpg")
             }),
-            bg: new Material(new Textured_Phong(), {
-                color: hex_color("#000000"),
-                ambient: 1, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/sky.jpg")
+            bg: new Material(new Phong_Shader(), {
+                color: hex_color("#87ceff"),
+                ambient: 1, diffusivity: 1, specularity: 1,
+                //texture: new Texture("assets/sky.jpg")
             }),
             roof: new Material(new Textured_Phong(), {
                 color: hex_color("#ea4e3e"),
@@ -96,9 +96,11 @@ export class Background extends Scene {
 
         this.intensity = 0;
         this.start = 0;
+        this.transition = 0;
         this.cracked = 0;
         this.overlap = 0;
         this.overlap2 = 1;
+        this.lighting = 0;
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
@@ -110,6 +112,18 @@ export class Background extends Scene {
         this.key_triggered_button("Large Earthquake", ["l"], () => {
             this.intensity = 2;
             this.start = 0;
+        });
+        this.key_triggered_button("Night to Day", ["n"], () => {
+            if (this.transition > 10 && this.lighting) {
+                this.transition = 0;
+                this.lighting = 0;
+            }
+        });
+        this.key_triggered_button("Day to Night", ["d"], () => {
+            if (this.transition > 10 && !this.lighting) {
+                this.transition = 0;
+                this.lighting = 1;
+            }
         });
     }
 
@@ -132,6 +146,14 @@ export class Background extends Scene {
         this.shapes.ground.draw(context, program_state, ground_trans, this.materials.ground_texture)
 
         let back_trans = Mat4.translation(0, 0, 0).times(Mat4.scale(250,250,250))
+        if (this.transition < 10) {
+            if (this.lighting) {
+                this.materials.bg = this.materials.bg.override({ambient: 1 - 0.1*this.transition});
+            } else {
+                this.materials.bg = this.materials.bg.override({ambient: 0.1*this.transition});
+            }
+        }
+        this.transition = this.transition + dt;
         this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
         /*
         let back_trans = Mat4.identity();
