@@ -9,6 +9,7 @@ import {Text_Demo} from "./examples/text-demo.js"
 import {Transforms_Sandbox} from "./examples/transforms-sandbox.js"
 import {Assignment0_Scene} from "./assignment0.js"
 import {Background} from "./background.js";
+import {Background2} from "./background2.js";
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -36,7 +37,8 @@ Object.assign(defs,
     {Text_Demo},
     {Transforms_Sandbox},
     {Assignment0_Scene},
-    {Background});
+    {Background},
+    {Background2});
 
 // ******************** End extra step
 
