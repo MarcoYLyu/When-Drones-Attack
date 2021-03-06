@@ -1026,7 +1026,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
         }
 
         /**
-         * Add mouse events to drawing canvas.
+         * Registers mouse events to drawing canvas.
          * 
          * @param {HTMLCanvasElement} canvas Canvas to add event listeners to.
          */
@@ -1047,11 +1047,6 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             this.enabled_canvases.add(canvas);
         }
 
-        /**
-         * 
-         * @param {any} context 
-         * @param {any} program_state 
-         */
         display(context, program_state) {
             if (!this.enabled_canvases.has(context.canvas))
                 this.add_mouse_controls(context.canvas);
@@ -1059,27 +1054,32 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             const P = program_state.projection_transform,
                   V = program_state.camera_inverse;
 
-            // Mouse picking init
+            // Computes our mouse near and far positions within the
+            // perspective projection.
             const pos_ndc_near = vec4(...this.mouse, -1, 1),
-                pos_ndc_far = vec4(...this.mouse, 1, 1),
-                center_ndc_near = vec4(0, 0, -1, 1),
-                ndcs_to_world = Mat4.inverse(P.times(V)),
-                pos_world_near = ndcs_to_world.times(pos_ndc_near),
-                pos_world_far = ndcs_to_world.times(pos_ndc_far),
-                center_world_near = ndcs_to_world.times(center_ndc_near);
+                  pos_ndc_far = vec4(...this.mouse, 1, 1),
+                  center_ndc_near = vec4(0, 0, -1, 1),
+                  ndcs_to_world = Mat4.inverse(P.times(V)),
+                  pos_world_near = ndcs_to_world.times(pos_ndc_near),
+                  pos_world_far = ndcs_to_world.times(pos_ndc_far),
+                  center_world_near = ndcs_to_world.times(center_ndc_near);
             pos_world_near.scale_by(1 / pos_world_near[3]);
             pos_world_far.scale_by(1 / pos_world_far[3]);
             center_world_near.scale_by(1 / center_world_near[3]);
 
+            // Update our member variables, and check if we have
+            // collided with any relevant objects in the scene.
             this.pos_world_far = pos_world_far;
             this.pos_world_near = pos_world_near;
             this.selected = this.checkCollision(this.mouse_vec());
         }
 
         /**
-         * Sets up a panel of readouts for mouse picking information.
+         * Panel of readouts for mouse picking information.
          */
         make_control_panel() {
+            // Reduces precision of Float32 vectors to something
+            // printable.
             const roundVec = v => [...v].map(e => e.toFixed(2));
 
             this.control_panel.innerHTML += "Move your mouse around the scene to update the vector it creates.";
