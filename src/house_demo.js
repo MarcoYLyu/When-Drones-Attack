@@ -75,13 +75,16 @@ export class House_Demo extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
-    make_control_panel() {
-
-    }
-
     display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+
+            // Initialize mousepicking controls.
+            this.children.push(new defs.Mousepick_Controls((mouse_vec) => {
+                // Intersection detection code goes here.
+                return "Nothing";
+            }));
+
             // place the camera 5 unit back from the origin
             program_state.set_camera(this.initial_camera_location);
         }
