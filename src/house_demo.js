@@ -35,23 +35,18 @@ export class House_Demo extends Scene {
             face5: new Regular_2D_Polygon(1, 3),
             face6: new Regular_2D_Polygon(1, 3),
             house: new House(),
+            man: new Cube(),
         }
-        // appear four times
-        /*
-        this.shapes.box_2.arrays.texture_coord = Vector.cast(
-            [0, 0], [2, 0], [0, 2], [2, 2],
-            [0, 0], [2, 0], [0, 2], [2, 2],
-            [0, 0], [2, 0], [0, 2], [2, 2],
-            [0, 0], [2, 0], [0, 2], [2, 2],
-            [0, 0], [2, 0], [0, 2], [2, 2],
-            [0, 0], [2, 0], [0, 2], [2, 2],
-        )
-        */
 
+        const man_data_members = {
+            roll: 0,
+            radians_per_frame: 1 / 200,
+            meters_per_frame: 20,
+            thrust: vec3(0, 0, 0)
+        }
 
-        // TODO:  Create the materials required to texture both cubes with the correct images and settings.
-        //        Make each Material from the correct shader.  Phong_Shader will work initially, but when
-        //        you get to requirements 6 and 7 you will need different ones.
+        Object.assign(this, man_data_members);
+
         this.materials = {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#ffffff")
@@ -73,6 +68,7 @@ export class House_Demo extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_man_transformation = Mat4.translation(5, 0, 30.3);
     }
 
     make_control_panel() {
@@ -236,7 +232,22 @@ export class House_Demo extends Scene {
         this.shapes.block3.draw(context, program_state, part3_transform.times(block_transform), this.materials.face);
 
         this.shapes.house.draw(context, program_state, Mat4.translation(8, 0, 0), this.materials.face.override({color: hex_color("#ffff00")}));
-        this.shapes.man.draw(context, program_state, )
+        
+        if (!this.onlyonce) {
+            this.onlyonce = true;
+            let boundary = await this.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
+            this.house_maxx = boundary[0];
+            this.house_minx = boundary[1];
+            this.house_maxz = boundary[2];
+            this.house_minz = boundary[3];
+        }
+
+        if (this.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
+            this.initial_man_transformation = this.previous_man_transformation;
+        } else {
+            this.previous_man_transformation = man_transformation;
+        }
+        this.shapes.man.draw(context, program_state, this.initial_man_transformation.times(Mat4.scale(0.3, 0.3, 0.3)), this.materials.roof);
 
     }
 }

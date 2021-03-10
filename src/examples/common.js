@@ -841,6 +841,14 @@ const Movement_Controls = defs.Movement_Controls =
                 () => graphics_state.camera_inverse);
         }
 
+        get_mouse_position() {
+            if (this.mouse) {
+                return this.mouse.from_center;
+            } else {
+                return vec3(0, 0, 0);
+            }
+        }
+
         add_mouse_controls(canvas) {
             // add_mouse_controls():  Attach HTML mouse events to the drawing canvas.
             // First, measure mouse steering, for rotating the flyaround camera:
