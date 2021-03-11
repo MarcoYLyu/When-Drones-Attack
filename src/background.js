@@ -1,6 +1,7 @@
 import {defs, tiny} from './examples/common.js';
-import {comps} from './house.js'
-import {Shape_From_File} from './examples/obj-file-demo.js'
+import { comps as HouseComps } from './house.js';
+import { comps as AlienComps } from './actors.js';
+import {Shape_From_File} from './examples/obj-file-demo.js';
 
 
 const {
@@ -8,17 +9,17 @@ const {
 } = tiny;
 
 const {Axis_Arrows, Textured_Phong, Phong_Shader, Regular_2D_Polygon, Cube, Square} = defs
-const {Roof, House} = comps;
+const {Roof, House} = HouseComps;
+const { Alien, Player } = AlienComps;
 
+// Pre-scripted scene showing the destruction of the player's
+// home.
 export class Background extends Scene {
-    /**
-     *  **Base_scene** is a Scene that can be added to any display canvas.
-     *  Setup the shapes, materials, camera, and lighting here.
-     */
     constructor() {
-        // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.shapes = {
+            alien: new Alien(),
+            player: new Player(),
             ground: new Square(),
             background: new defs.Subdivision_Sphere(4),
             volcano: new Shape_From_File("assets/mount.obj"),
@@ -94,37 +95,12 @@ export class Background extends Scene {
             ambient: .3, diffusivity: .5, specularity: .5, texture: new Texture("assets/rock.jpg")
         });
 
-        this.intensity = 0;
         this.start = 0;
-        this.transition = 0;
         this.cracked = 0;
         this.overlap = 0;
         this.overlap2 = 1;
-        this.lighting = 0;
+        this.lighting = 1;
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-    }
-
-    make_control_panel() {
-        this.key_triggered_button("Small Earthquake", ["s"], () => {
-            this.intensity = 1;
-            this.start = 0;
-        });
-        this.key_triggered_button("Large Earthquake", ["l"], () => {
-            this.intensity = 2;
-            this.start = 0;
-        });
-        this.key_triggered_button("Night to Day", ["n"], () => {
-            if (this.transition > 10 && this.lighting) {
-                this.transition = 0;
-                this.lighting = 0;
-            }
-        });
-        this.key_triggered_button("Day to Night", ["d"], () => {
-            if (this.transition > 10 && !this.lighting) {
-                this.transition = 0;
-                this.lighting = 1;
-            }
-        });
     }
 
     display(context, program_state) {
@@ -146,25 +122,8 @@ export class Background extends Scene {
         this.shapes.ground.draw(context, program_state, ground_trans, this.materials.ground_texture)
 
         let back_trans = Mat4.translation(0, 0, 0).times(Mat4.scale(250,250,250))
-        if (this.transition < 10) {
-            if (this.lighting) {
-                this.materials.bg = this.materials.bg.override({ambient: 1 - 0.1*this.transition});
-            } else {
-                this.materials.bg = this.materials.bg.override({ambient: 0.1*this.transition});
-            }
-        }
-        this.transition = this.transition + dt;
+        this.materials.bg = this.materials.bg.override({ ambient: 0.15 });
         this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
-        /*
-        let back_trans = Mat4.identity();
-        let screens = 40.0;
-        for (let i = 0; i < screens; i++) {
-            back_trans = Mat4.rotation(Math.PI * i / (screens-1) - Math.PI / 2, 0, 1, 0)
-                .times(Mat4.translation(0,10, -50))
-                .times(Mat4.scale(50 * Math.tan(Math.PI / (2 * (screens-1))), 20, 20))
-            this.shapes.background.draw(context, program_state, back_trans, this.materials.bg)
-        }
-        */
 
         let vol_trans = Mat4.translation(0, 12, -40).times(Mat4.scale(30, 30, 30))
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol)
@@ -200,62 +159,56 @@ export class Background extends Scene {
 
         let moving_parts = [roof_transform, roof2_transform, roof3_transform, face1_transform, face2_transform, face3a_transform,
                             face3b_transform, face3c_transform, face4_transform, block_transform, block2_transform, block3_transform];
-        if (this.intensity == 1) {
-            if (this.start < 10) {
-                vol_trans = Mat4.translation(0, 0, 2.5*Math.sin(0.4*Math.PI*this.start)).times(vol_trans);
-                road_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(road_transform);
-                roof_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof_transform);
-                roof2_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof2_transform);
-                roof3_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof3_transform);
-                face1_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face1_transform);
-                face2_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face2_transform);
-                face3a_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3a_transform);
-                face3b_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3b_transform);
-                face3c_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3c_transform);
-                face4_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face4_transform);
-                block_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block_transform);
-                block2_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block2_transform);
-                block3_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block3_transform);
-                brick_transform = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform);
-                brick_transform2 = Mat4.translation(0.25*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform2);
-                brick_transform2 = brick_transform2.times(Mat4.rotation(Math.PI/16 * Math.sin(-0.4*Math.PI*this.start), 0, 0, 1));
-                this.start = this.start + dt;
+
+        // Alien ship wrecking havoc.
+        const alien_transform = Mat4.translation(0, 5, 0).times(
+            // Rotate the ship over the home.
+            Mat4.rotation((t * 3.0) % (2 * Math.PI), 0, 1, 0)
+        );
+        this.shapes.alien.draw(context, program_state, alien_transform, this.materials.cracked.override({
+            color: hex_color("#0b0b0b"),
+        }));
+
+        // Player standing by.
+        const player_transform = Mat4.translation(0, 1, 10);
+        this.shapes.player.draw(context, program_state, player_transform, this.materials.phong.override({
+            color: hex_color("#004f00"),
+        }));
+
+        if (this.start < 15) {
+            vol_trans = Mat4.translation(0, 0, 5*Math.sin(0.4*Math.PI*this.start)).times(vol_trans);
+            road_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(road_transform);
+            roof_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof_transform);
+            roof2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof2_transform);
+            roof3_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof3_transform);
+            face1_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face1_transform);
+            face2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face2_transform);
+            face3a_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3a_transform);
+            face3b_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3b_transform);
+            face3c_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3c_transform);
+            face4_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face4_transform);
+            block_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block_transform);
+            block2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block2_transform);
+            block3_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block3_transform);
+            brick_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform);
+            brick_transform2 = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform2);
+
+            if (this.start < 6.45) {
+                brick_transform2 = brick_transform2.times(Mat4.rotation(Math.PI/12 * Math.sin(-0.4*Math.PI*this.start), 0, 0, 1));
             }
-        } else if (this.intensity == 2) {
-            if (this.start < 15) {
-                vol_trans = Mat4.translation(0, 0, 5*Math.sin(0.4*Math.PI*this.start)).times(vol_trans);
-                road_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(road_transform);
-                roof_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof_transform);
-                roof2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof2_transform);
-                roof3_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(roof3_transform);
-                face1_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face1_transform);
-                face2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face2_transform);
-                face3a_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3a_transform);
-                face3b_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3b_transform);
-                face3c_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face3c_transform);
-                face4_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(face4_transform);
-                block_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block_transform);
-                block2_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block2_transform);
-                block3_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(block3_transform);
-                brick_transform = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform);
-                brick_transform2 = Mat4.translation(0.5*Math.sin(0.4*Math.PI*this.start), 0, 0).times(brick_transform2);
-                if (this.start < 6.45) {
-                    brick_transform2 = brick_transform2.times(Mat4.rotation(Math.PI/12 * Math.sin(-0.4*Math.PI*this.start), 0, 0, 1));
+            if (this.start < 9.45 && this.start > 6.45) {
+                if (this.start > 6.45) {
+                    this.overlap2 = 0;
                 }
-                if (this.start < 9.45 && this.start > 6.45) {
-                    if (this.start > 6.45) {
-                        this.overlap2 = 0;
-                    }
-                    brick_transform3 = Mat4.translation(0, -0.89*(this.start - 6.65), 0).times(brick_transform3);
-                    this.overlap = 1;
-                } else if (this.start > 9.45) {
-                    this.cracked = 1;
-                    this.overlap = 0;
-                    this.overlap2 = 1;
-                    brick_transform2 = Mat4.translation(5, -1, 0).times(Mat4.rotation(Math.PI/2, 0, 0, 1)).times(Mat4.scale(0.25, 0.75, 0.25));
-                }
-                this.start = this.start + dt;
+                brick_transform3 = Mat4.translation(0, -0.89*(this.start - 6.65), 0).times(brick_transform3);
+                this.overlap = 1;
+            } else if (this.start > 9.45) {
+                this.cracked = 1;
+                this.overlap = 0;
+                this.overlap2 = 1;
+                brick_transform2 = Mat4.translation(5, -1, 0).times(Mat4.rotation(Math.PI/2, 0, 0, 1)).times(Mat4.scale(0.25, 0.75, 0.25));
             }
+            this.start = this.start + dt;
         }
 
         this.shapes.roof1.draw(context, program_state, roof_transform, this.materials.roof);
