@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import { comps as HouseComps } from './house.js';
-import { comps as AlienComps } from './actors.js';
+import { comps as ActorComps } from './actors.js';
 import {Shape_From_File} from './examples/obj-file-demo.js';
 
 
@@ -10,11 +10,11 @@ const {
 
 const {Axis_Arrows, Textured_Phong, Phong_Shader, Regular_2D_Polygon, Cube, Square} = defs
 const {Roof, House} = HouseComps;
-const { Alien, Player } = AlienComps;
+const { Alien, Player } = ActorComps;
 
 // Pre-scripted scene showing the destruction of the player's
 // home.
-export class Background extends Scene {
+export class Alien_Attack extends Scene {
     constructor() {
         super();
         this.shapes = {
