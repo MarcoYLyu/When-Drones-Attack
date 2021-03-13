@@ -1026,6 +1026,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             this.checkCollision = checkCollision;
             this.selected = "";
             this.enabled_canvases = new Set();
+            this.click = false;
 
             this.mouse = vec(0, 0);
             this.pos_world_far = vec4(0, 0, 0, 0);
@@ -1053,7 +1054,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             });
             canvas.addEventListener("click", e => {
                 e.preventDefault();
-                this.checkCollision(this.mouse_vec(), true);
+                this.click = true;
             });
 
             this.enabled_canvases.add(canvas);

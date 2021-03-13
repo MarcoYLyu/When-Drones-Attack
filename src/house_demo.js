@@ -5,7 +5,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
-const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube} = defs
+const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube, Square} = defs
 const {Roof, House} = comps;
 
 
@@ -36,6 +36,7 @@ export class House_Demo extends Scene {
             face6: new Regular_2D_Polygon(1, 3),
             house: new House(),
             man: new Cube(),
+            target: new Square(),
         }
 
         const man_data_members = {
@@ -68,7 +69,11 @@ export class House_Demo extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-        this.initial_man_transformation = Mat4.translation(5, 0, 30.3);
+        //this.initial_man_transformation = Mat4.translation(5, 0, 30.3);
+        this.initial_man_transformation = Mat4.translation(0, 0, 0);
+        this.current_man_position = vec4(0, 0, 0, 1);
+        this.moving = false;
+        this.itr = 0;
     }
 
     make_control_panel() {
@@ -82,7 +87,7 @@ export class House_Demo extends Scene {
         this.key_triggered_button("left", ["d"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
     }
 
-    get_man_transformation(mouse_from_center, radians_per_frame, meters_per_frame, leeway = 70) {
+    get_man_transformation(mouse_from_center, radians_per_frame, meters_per_frame, leeway = 30) {
         const offsets_from_dead_box = {
             plus: [mouse_from_center[0] + leeway, mouse_from_center[1] + leeway],
             minus: [mouse_from_center[0] - leeway, mouse_from_center[1] - leeway]
@@ -93,6 +98,7 @@ export class House_Demo extends Scene {
         let temp = this.initial_man_transformation.times(Mat4.rotation(-velocity * 0.7, 0, 1, 0))
                     .times(Mat4.rotation(-0.1 * this.roll, 0, 0, 1))
                     .times(Mat4.translation(...this.thrust.times(meters_per_frame)));
+        
         this.initial_man_transformation = temp;
         return temp;
     }
@@ -168,12 +174,29 @@ export class House_Demo extends Scene {
         return [maxx, minx, maxz, minz];
     }
 
+    get_mouse_picking_location(cur_pos, mouse_vec, altitude) {
+        if (mouse_vec[0] == 0) {
+            return cur_pos;
+        }
+        let t = (altitude - cur_pos[1]) / mouse_vec[1];
+        let x = cur_pos[0] + mouse_vec[0] * t;
+        let z = cur_pos[2] + mouse_vec[2] * t;
+        if (t < 0) {
+            return cur_pos;
+        }
+        return vec4(x, altitude, z, 1);
+    }
+
+    has_used_wasd() {
+        return !this.thrust.every(e => e == 0);
+    }
+
     async display(context, program_state) {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
 
             // Initialize mousepicking controls.
-            this.children.push(new defs.Mousepick_Controls((mouse_vec) => {
+            this.children.push(context.scratchpad.mouse_controls = new defs.Mousepick_Controls((mouse_vec) => {
                 // Intersection detection code goes here.
                 return "Nothing";
             }));
@@ -183,13 +206,42 @@ export class House_Demo extends Scene {
         }
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        let speed = 0.01;
+        let mouse_vec = context.scratchpad.mouse_controls.mouse_vec().normalized();
+        let camera_obj_x = 0;
+        let camera_obj_y = 2;
+        let camera_obj_z = 6;
 
         const m = this.meters_per_frame;
         const r = this.radians_per_frame;
         let man_transformation = this.get_man_transformation(context.scratchpad.controls.get_mouse_position(), dt * r, dt * m);
 
+        let cur_pos = this.current_man_position;
+        let target_pos = this.get_mouse_picking_location(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1), mouse_vec, 0);
+
+        if (context.scratchpad.mouse_controls.click) {
+            this.moving_vec = target_pos.minus(cur_pos);
+
+            console.log(target_pos);
+
+            context.scratchpad.mouse_controls.click = false;
+            this.moving = true;
+        }
+
+        if (this.moving) {
+            if (this.itr >= 1 / speed || this.has_used_wasd()) {
+                this.itr = 0;
+                this.moving = false;
+                console.log(this.current_man_position);
+            } else {
+                this.initial_man_transformation = Mat4.translation(this.moving_vec[0] * speed, 0, this.moving_vec[2] * speed).times(this.initial_man_transformation);
+                man_transformation = this.initial_man_transformation;
+                this.itr += 1;
+            }
+        }
+
         this.current_man_position = man_transformation.times(vec4(0, 0, 0, 1));
-        let camera_pos = man_transformation.times(vec4(0, 3, 10, 1));
+        let camera_pos = man_transformation.times(vec4(camera_obj_x, camera_obj_y, camera_obj_z, 1));
 
         let posx = this.current_man_position[0];
         let posy = this.current_man_position[1];
@@ -198,7 +250,7 @@ export class House_Demo extends Scene {
         let cameray = camera_pos[1];
         let cameraz = camera_pos[2];
         program_state.set_camera(Mat4.look_at(vec3(camerax, cameray, cameraz), vec3(posx, posy, posz), vec3(0, 1, 0)));
-
+        
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
 
@@ -247,7 +299,12 @@ export class House_Demo extends Scene {
         } else {
             this.previous_man_transformation = man_transformation;
         }
+        let temp = target_pos.minus(this.current_man_position);
         this.shapes.man.draw(context, program_state, this.initial_man_transformation.times(Mat4.scale(0.3, 0.3, 0.3)), this.materials.roof);
-
+        
+        
+        this.shapes.target.draw(context, program_state, Mat4.translation(temp[0], temp[1], temp[2]).times(this.initial_man_transformation)
+                                                            .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                                                            .times(Mat4.translation(0, 0, 1)), this.materials.roof);
     }
 }
