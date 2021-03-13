@@ -1051,7 +1051,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
                 e.preventDefault();
                 this.mouse = mouse_position(e);
             });
-            canvas.addEventListener("click", () => {
+            canvas.addEventListener("click", e => {
                 e.preventDefault();
                 this.checkCollision(this.mouse_vec(), true);
             });
