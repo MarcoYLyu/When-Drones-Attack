@@ -56,7 +56,7 @@ export class Background extends Scene {
             }),
             face: new Material(new Textured_Phong(), {
                 color: hex_color("#ddd6c3"),
-                ambient: 0.7, diffusivity: 0.8
+                ambient: 0.6, diffusivity: 0.8
             }),
             ground_texture: new Material(new Textured_Phong(), {
                 color: hex_color("#835846"),
@@ -199,8 +199,6 @@ export class Background extends Scene {
         this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, 0.5))), this.materials.face);
         this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, -0.5))), this.materials.face);
         this.shapes.block.draw(context, program_state, base_translation.times(part3_transform.times(block_transform)), this.materials.face);
-
-        this.shapes.house.draw(context, program_state, base_translation.times(Mat4.translation(8, 0, 0)), this.materials.face.override({color: hex_color("#ffff00")}));
     }
 
     async display(context, program_state) {
@@ -272,7 +270,7 @@ export class Background extends Scene {
         this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
 
         // Draw our house.
-        this.draw_house(context, program_state, Mat4.translation(0, -1.5, 0));
+        this.draw_house(context, program_state, Mat4.translation(8, -1.5, 0));
 
         /***********************
          * COLLISION DETECTION *
