@@ -44,7 +44,7 @@ Object.assign(defs,
 
 // (Can define Main_Scene's class here)
 
-const Main_Scene = House_Demo;
+const Main_Scene = Background;
 const Additional_Scenes = [];
 
 export {Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs}
