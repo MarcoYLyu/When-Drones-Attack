@@ -8,7 +8,7 @@ const {
 } = tiny;
 
 const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube, Square} = defs
-const {Roof, House, Collision_Helper, Mousepick_Controls} = comps;
+const {Alien, Roof, House, Collision_Helper, Mousepick_Controls} = comps;
 
 export class Background extends Scene {
     /**
@@ -30,7 +30,7 @@ export class Background extends Scene {
             face: new Regular_2D_Polygon(1, 3),
             man: new Cube(),
             target: new Square(),
-            alien: new Cube(),
+            alien: new Alien(),
         }
 
         const man_data_members = {

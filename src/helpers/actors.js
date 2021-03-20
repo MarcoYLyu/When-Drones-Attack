@@ -1,4 +1,4 @@
-import { defs, tiny } from "./examples/common.js";
+import { defs, tiny } from "../examples/common.js";
 
 const {
   Shape,
@@ -6,11 +6,11 @@ const {
 } = tiny;
 const { Cube, Subdivision_Sphere } = defs;
 
-const comps = {};
+const actors_helper = {};
 
-export { comps };
+export { actors_helper };
 
-const Alien = comps.Alien = class Alien extends Shape {
+const Alien = actors_helper.Alien = class Alien extends Shape {
   constructor() {
     super("position", "normal", "texture_coord");
 
@@ -35,7 +35,7 @@ const Alien = comps.Alien = class Alien extends Shape {
   }
 };
 
-const Player = comps.Player = class Player extends Shape {
+const Player = actors_helper.Player = class Player extends Shape {
   constructor() {
     super("position", "normal", "texture_coord");
     Cube.insert_transformed_copy_into(this, [], Mat4.scale(0.35, 0.5, 0.25));
