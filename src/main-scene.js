@@ -7,9 +7,7 @@ import {Scene_To_Texture_Demo} from "./examples/scene-to-texture-demo.js"
 import {Surfaces_Demo} from "./examples/surfaces-demo.js"
 import {Text_Demo} from "./examples/text-demo.js"
 import {Transforms_Sandbox} from "./examples/transforms-sandbox.js"
-import {Assignment0_Scene} from "./assignment0.js"
 import {Background} from "./background.js";
-import {House_Demo} from "./house_demo.js"
 
 // Pull these names into this module's scope for convenience:
 const {
@@ -36,9 +34,7 @@ Object.assign(defs,
     {Surfaces_Demo},
     {Text_Demo},
     {Transforms_Sandbox},
-    {Assignment0_Scene},
-    {Background},
-    {House_Demo});
+    {Background});
 
 // ******************** End extra step
 
