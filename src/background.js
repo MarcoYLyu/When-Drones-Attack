@@ -30,6 +30,7 @@ export class Background extends Scene {
             face: new Regular_2D_Polygon(1, 3),
             man: new Cube(),
             target: new Square(),
+            alien: new Cube(),
         }
 
         const man_data_members = {
@@ -85,10 +86,14 @@ export class Background extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 50, 100), vec3(0, 0, 0), vec3(0, 1, 0));
 
         // Movement members.
-        this.initial_man_transformation = Mat4.translation(0, 0, 0);
+        this.initial_man_transformation = Mat4.translation(0, 0, 10);
         this.current_man_position = vec4(0, 0, 0, 1);
         this.moving = false;
         this.itr = 0;
+
+        // Cutscene status.
+        this.cutscenePlayed = false;
+        this.cutsceneStart = undefined;
     }
 
     make_control_panel() {
@@ -165,8 +170,8 @@ export class Background extends Scene {
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol);
         this.shapes.island.draw(context, program_state, island_trans, this.island);
         const sky_trans = Mat4.translation(0, 30, 0)
-                            .times(Mat4.scale(400, 400, 400))
-        this.shapes.sky.draw(context, program_state, Mat4.scale(50, 50, 50), this.sky);
+                            .times(Mat4.scale(500, 500, 500))
+        this.shapes.sky.draw(context, program_state, sky_trans, this.sky);
     }
 
     /**
@@ -201,16 +206,50 @@ export class Background extends Scene {
         this.shapes.block.draw(context, program_state, base_translation.times(part3_transform.times(block_transform)), this.materials.face);
     }
 
-    async display(context, program_state) {
-        if (!context.scratchpad.controls) {
-            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            // place the camera 5 unit back from the origin
-            
-            this.children.push(context.scratchpad.mouse_controls = new defs.Mousepick_Controls());
-        }
+    // Introductory cutscene. Alien destroys the player's house.
+    cutscene(context, program_state) {
+        const t = program_state.animation_time / 1000;
 
-        program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 2000);
+        // If we haven't started the cutscene yet, record it.
+        if (!this.cutsceneStart) this.cutsceneStart = t;
+
+        // Shakes the home.
+        const displacement_speed = 50;
+        const displacement_amount = -0.1;
+        const house_displacement = displacement_amount + displacement_amount * Math.sin((t * displacement_speed) % (2 * Math.PI));
+
+        // Controls the rotation and position of the alien.
+        const rotation_speed = 5;
+        const alien_size = vec3(2, 0.75, 3);
+        const alien_position = vec3(8, -1.5 + 5, 0);
+        const alien_angle = (t * rotation_speed) % (2 * Math.PI);
+
+        // We have to fix our camera to the action.
+        program_state.set_camera(Mat4.look_at(
+            vec3(10, 5, 20),
+            vec3(8, -1.5, 0),
+            vec3(0, 1, 0)
+        ));
+
+        // Draw our primary actors.
+        this.shapes.alien.draw(
+            context,
+            program_state,
+            Mat4.translation(...alien_position)
+                .times(Mat4.scale(...alien_size))
+                .times(Mat4.rotation(alien_angle, 0, 1, 0)),
+            this.materials.face.override({
+                color: hex_color("#ff0000"),
+            }),
+        );
+        this.draw_house(context, program_state, Mat4.translation(8, -1.5 - house_displacement, 0));
+
+        // Check if we need to hand off to the game.
+        if (t - this.cutsceneStart > 5.0) this.cutscenePlayed = true;
+    }
+
+    // The actual "game". Player moves around, can use mouse-picked movement, etc.
+    async game(context, program_state) {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const speed = 0.01;
         const mouse_vec = context.scratchpad.mouse_controls.mouse_vec().normalized();
@@ -257,18 +296,6 @@ export class Background extends Scene {
         let cameraz = camera_pos[2];
         program_state.set_camera(Mat4.look_at(vec3(camerax, cameray, cameraz), vec3(posx, posy, posz), vec3(0, 1, 0)));
         
-        program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 100);
-
-        const light_trans = Mat4.rotation(t/3, 0, 1, 0)
-        const light_position = light_trans.times(vec4(-50, 30, 0, 1));
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)];
-
-        /**********
-         * ISLAND *
-         **********/
-        this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
-
         // Draw our house.
         this.draw_house(context, program_state, Mat4.translation(8, -1.5, 0));
 
@@ -297,5 +324,32 @@ export class Background extends Scene {
                                                                 .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                                                                 .times(Mat4.translation(0, 0, 1)), this.materials.roof);
         }
+    }
+
+    async display(context, program_state) {
+        if (!context.scratchpad.controls) {
+            this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
+            // place the camera 5 unit back from the origin
+            
+            this.children.push(context.scratchpad.mouse_controls = new defs.Mousepick_Controls());
+        }
+
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
+        program_state.projection_transform = Mat4.perspective(
+            Math.PI / 4, context.width / context.height, 1, 2000);
+
+        const light_trans = Mat4.rotation(t/3, 0, 1, 0)
+        const light_position = light_trans.times(vec4(-50, 30, 0, 1));
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)];
+
+        /**********
+         * ISLAND *
+         **********/
+        this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
+
+        if (!this.cutscenePlayed)
+            return this.cutscene(context, program_state);
+        this.game(context, program_state);
     }
 }
