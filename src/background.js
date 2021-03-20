@@ -8,7 +8,7 @@ const {
 } = tiny;
 
 const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube, Square} = defs
-const {Roof, House, Collision_Helper} = comps;
+const {Roof, House, Collision_Helper, Mousepick_Controls} = comps;
 
 export class Background extends Scene {
     /**
@@ -331,7 +331,7 @@ export class Background extends Scene {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // place the camera 5 unit back from the origin
             
-            this.children.push(context.scratchpad.mouse_controls = new defs.Mousepick_Controls());
+            this.children.push(context.scratchpad.mouse_controls = new Mousepick_Controls());
         }
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
