@@ -1017,8 +1017,8 @@ const Mousepick_Controls = defs.Mousepick_Controls =
         /**
          * Creates a new Mousepick_Controls module for the scene.
          * 
-         * @param {(vec4, boolean, boolean) => String} checkCollision Given a vector in 4D space and the
-         * LMB, RMB click state, return some String describing what the ray intersects.
+         * @param {(vec4, boolean) => String} checkCollision Given a vector in 4D space and the click
+         * state, return some String describing what the ray intersects.
          */
         constructor(checkCollision = (() => "")) {
             super();
@@ -1026,8 +1026,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             this.checkCollision = checkCollision;
             this.selected = "";
             this.enabled_canvases = new Set();
-            this.LMB = false;
-            this.RMB = false;
+            this.click = false;
 
             this.mouse = vec(0, 0);
             this.pos_world_far = vec4(0, 0, 0, 0);
@@ -1055,8 +1054,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             });
             canvas.addEventListener("click", e => {
                 e.preventDefault();
-                this.LMB = e.buttons >= 1;
-                this.RMB = e.buttons >= 2;
+                this.click = true;
             });
 
             this.enabled_canvases.add(canvas);
@@ -1086,7 +1084,7 @@ const Mousepick_Controls = defs.Mousepick_Controls =
             // collided with any relevant objects in the scene.
             this.pos_world_far = pos_world_far;
             this.pos_world_near = pos_world_near;
-            this.selected = this.checkCollision(this.mouse_vec(), this.LMB, this.RMB);
+            this.selected = this.checkCollision(this.mouse_vec(), false);
         }
 
         /**
