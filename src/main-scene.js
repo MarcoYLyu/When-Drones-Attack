@@ -34,9 +34,7 @@ Object.assign(defs,
     {Surfaces_Demo},
     {Text_Demo},
     {Transforms_Sandbox},
-    {Assignment0_Scene},
-    {Background},
-    {House_Demo});
+    {Background});
 
 // ******************** End extra step
 
