@@ -1,12 +1,12 @@
 import {defs, tiny} from './examples/common.js';
-import {comps} from './house.js'
+import {comps} from './helpers/helper.js'
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
 const {Axis_Arrows, Textured_Phong, Regular_2D_Polygon, Cube, Square} = defs
-const {Roof, House} = comps;
+const {Roof, House, Collision_Helper} = comps;
 
 
 export class House_Demo extends Scene {
@@ -87,6 +87,7 @@ export class House_Demo extends Scene {
         this.key_triggered_button("left", ["d"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
     }
 
+
     get_man_transformation(mouse_from_center, radians_per_frame, meters_per_frame, leeway = 30) {
         const offsets_from_dead_box = {
             plus: [mouse_from_center[0] + leeway, mouse_from_center[1] + leeway],
@@ -103,84 +104,16 @@ export class House_Demo extends Scene {
         return temp;
     }
 
-    distance(point1, point2) {
-        return (point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2 + (point1[2] - point2[2]) ** 2;
-    }
-
-    euclidean_distance(point1, point2) {
-        return Math.sqrt(this.distance(point1, point2));
-    }
-
-    get_farthest_points(positions) {
-        let point1;
-        let point2;
-        let dist = -1;
-        for (let itr1 of positions) {
-            for (let itr2 of positions) {
-                let temp = this.distance(itr1, itr2);
-                if (temp > dist) {
-                    dist = temp;
-                    point1 = itr1;
-                    point2 = itr2;
-                }
-            }
-        }
-        return [point1, point2];
-    }
-
-    has_sphere_collision(points, center, radius, leeway) {
-        let res = false;
-        for (let point of points) {
-            let temp = this.euclidean_distance(point, center);
-            if (temp + leeway <= radius) {
-                res = true;
-            }
-        }
-        return res;
-    }
-
-    has_square_collision(point, maxx, minx, maxz, minz, leewayx = 0, leewayy = 0) {
-        let x = point[0];
-        let z = point[2];
-        if (x + leewayx < maxx && x - leewayx > minx && z + leewayy < maxz && z - leewayy > minz) {
-            return true;
-        }
-        return false;
-    }
-    
-    get_obj_positions(object, trans) {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                let res = [];
-                let temp = object.arrays.position;
-                temp.forEach(point => res.push(trans.times(point.to4(true))));
-                resolve(res);
-            }, 500);
-        });
-    }
-
-    async get_xz_boundaries_helper(object, transformation) {
-        let temp = await this.get_obj_positions(object, transformation);   
-        let maxz = -1;
-        let minz = 100;
-        let maxx = -1;
-        let minx = 100;
-        for (let point of temp) {
-            maxx = Math.max(maxx, point[0]);
-            minx = Math.min(minx, point[0]);
-            maxz = Math.max(maxz, point[2]);
-            minz = Math.min(minz, point[2]);
-        }
-        return [maxx, minx, maxz, minz];
-    }
-
     get_mouse_picking_location(cur_pos, mouse_vec, altitude) {
         if (mouse_vec[0] == 0) {
             return cur_pos;
         }
+        // target_pos = cur_pos + t * mouse_vec
         let t = (altitude - cur_pos[1]) / mouse_vec[1];
         let x = cur_pos[0] + mouse_vec[0] * t;
         let z = cur_pos[2] + mouse_vec[2] * t;
+
+        // we don't want it to go back.
         if (t < 0) {
             return cur_pos;
         }
@@ -200,9 +133,6 @@ export class House_Demo extends Scene {
                 // Intersection detection code goes here.
                 return "Nothing";
             }));
-
-            // place the camera 5 unit back from the origin
-            //program_state.set_camera(this.initial_camera_location);
         }
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
@@ -218,21 +148,21 @@ export class House_Demo extends Scene {
 
         let cur_pos = this.current_man_position;
         let target_pos = this.get_mouse_picking_location(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1), mouse_vec, 0);
+        let temp_moving_vec = target_pos.minus(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1));
 
         if (context.scratchpad.mouse_controls.click) {
-            this.moving_vec = target_pos.minus(cur_pos);
-
-            console.log(target_pos);
+            this.moving_vec = temp_moving_vec;
+            console.log("cur_pos: " + cur_pos);
+            console.log("target_pos: " + target_pos);
 
             context.scratchpad.mouse_controls.click = false;
             this.moving = true;
         }
 
         if (this.moving) {
-            if (this.itr >= 1 / speed || this.has_used_wasd()) {
+            if (this.itr >= 1 / speed || this.has_used_wasd() || this.moving_vec.norm() == 0) {
                 this.itr = 0;
                 this.moving = false;
-                console.log(this.current_man_position);
             } else {
                 this.initial_man_transformation = Mat4.translation(this.moving_vec[0] * speed, 0, this.moving_vec[2] * speed).times(this.initial_man_transformation);
                 man_transformation = this.initial_man_transformation;
@@ -287,14 +217,14 @@ export class House_Demo extends Scene {
         
         if (!this.onlyonce) {
             this.onlyonce = true;
-            let boundary = await this.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
+            let boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
             this.house_maxx = boundary[0];
             this.house_minx = boundary[1];
             this.house_maxz = boundary[2];
             this.house_minz = boundary[3];
         }
 
-        if (this.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
+        if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
             this.initial_man_transformation = this.previous_man_transformation;
         } else {
             this.previous_man_transformation = man_transformation;
@@ -302,9 +232,10 @@ export class House_Demo extends Scene {
         let temp = target_pos.minus(this.current_man_position);
         this.shapes.man.draw(context, program_state, this.initial_man_transformation.times(Mat4.scale(0.3, 0.3, 0.3)), this.materials.roof);
         
-        
-        this.shapes.target.draw(context, program_state, Mat4.translation(temp[0], temp[1], temp[2]).times(this.initial_man_transformation)
-                                                            .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
-                                                            .times(Mat4.translation(0, 0, 1)), this.materials.roof);
+        if (temp_moving_vec.norm() !== 0.0) {
+            this.shapes.target.draw(context, program_state, Mat4.translation(temp[0], temp[1], temp[2]).times(this.initial_man_transformation)
+                                                                .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                                                                .times(Mat4.translation(0, 0, 1)), this.materials.roof);
+        }
     }
 }
