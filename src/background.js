@@ -88,7 +88,7 @@ export class Background extends Scene {
             ambient: .5, diffusivity: .5, specularity: .5, texture: new Texture("assets/gray.jpg")
         });
 
-        this.island_scale = 30;
+        this.island_scale = 60;
         // the map function doesn't work, it worked initially
         //this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0]*this.island_scale, x[1]*this.island_scale, x[2]*this.island_scale])
 
@@ -218,15 +218,15 @@ export class Background extends Scene {
 
 
         const vol_trans = base_translation.times(
-                            Mat4.translation(-15, 8, -20)
-                            .times(Mat4.scale(15, 15, 15))
+                            Mat4.translation(-15, 9, -20)
+                            .times(Mat4.scale(30, 30, 30))
                         );
-        const island_trans = base_translation.times(Mat4.scale(30, 30, 30));
+        const island_trans = base_translation.times(Mat4.scale(this.island_scale, this.island_scale, this.island_scale));
         this.shapes.volcano.draw(context, program_state, vol_trans, this.vol);
         this.shapes.island.draw(context, program_state, island_trans, this.island);
         const sky_trans = Mat4.translation(0, 30, 0)
                             .times(Mat4.scale(400, 400, 400))
-        this.shapes.sky.draw(context, program_state, Mat4.scale(50, 50, 50), this.sky);
+        this.shapes.sky.draw(context, program_state, Mat4.scale(100, 100, 100), this.sky);
     }
 
     /**
@@ -314,6 +314,7 @@ export class Background extends Scene {
         let camera_pos = man_transformation.times(vec4(camera_obj_x, camera_obj_y, camera_obj_z, 1));
 
         if (t > 1 && t < 1.5) {
+            // apply scale transformation to island vertexs
             this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0]*this.island_scale, x[1]*this.island_scale, x[2]*this.island_scale])
             let surface_indices = this.shapes.island.indices;
             this.surfaces = []
@@ -332,8 +333,8 @@ export class Background extends Scene {
             let cameray = camera_pos[1];
             let cameraz = camera_pos[2];
 
-            //need to move character up by 2.5 unit
-            let y_base = -2.5;
+            //The Foot of Character is 2.5 unit below local origin, move 2.5 - 5 = -2.5 in y direction
+            const y_base = -2.5;
 
             let surface = this.find_Surface(this.surfaces, posx, posz);
             let character_y = this.get_y(surface, posx, posz) + y_base;
@@ -359,7 +360,7 @@ export class Background extends Scene {
             this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
 
             // Draw our house.
-            this.draw_house(context, program_state, Mat4.translation(8, -1.5, 0));
+            this.draw_house(context, program_state, Mat4.translation(8, 0.7, 0));
 
             /***********************
              * COLLISION DETECTION *
