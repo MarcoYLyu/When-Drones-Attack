@@ -118,6 +118,7 @@ export class Background extends Scene {
             "1 1": 7 * Math.PI / 4,
             "0 0": Math.PI / 2
         };
+        this.cur_height = 0;
 
         // Cutscene status.
         this.cutscenePlayed = false;
@@ -182,6 +183,11 @@ export class Background extends Scene {
         this.new_line();
         this.key_triggered_button("left", ["d"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
         this.new_line();
+        this.key_triggered_button("jump", [" "], () => {
+            if (!this.rising && !this.falling) {
+                this.jump = true;
+            }
+        })
     }
 
     get_man_transformation(mouse_from_center, radians_per_frame, meters_per_frame, leeway = 30) {
@@ -375,9 +381,32 @@ export class Background extends Scene {
         //The Foot of Character is 2.5 unit below local origin, move 2.5 - 5 = -2.5 in y direction
         const y_base = -2.5;
 
+        // jump feature
+        const jump_distance = 5;
         let surface = this.find_Surface(this.surfaces, posx, posz);
-        let character_y = this.get_y(surface, posx, posz) + y_base;
-        
+        if (this.jump) {
+            this.rising = true;
+            this.jump = false;
+            this.jump_start_time = t;
+        } else if (this.rising) {
+            let diff_time = t - this.jump_start_time;
+            if (this.cur_height >= jump_distance) {
+                this.falling = true;
+                this.rising = false;
+                this.fall_start_time = t;
+            } else {
+                this.cur_height = 2 * jump_distance * diff_time - 0.5 * diff_time * diff_time
+            }
+        } else if (this.falling) {
+            let diff_time = t - this.fall_start_time;
+            if (this.cur_height <= 0.0) {
+                this.falling = false;
+            } else {
+                this.cur_height -= 0.5 * diff_time * diff_time;
+            }
+        }
+
+        let character_y = this.get_y(surface, posx, posz) + y_base + this.cur_height;
         let height_change = character_y - posy;
 
         /***********************
@@ -394,10 +423,12 @@ export class Background extends Scene {
             this.house_minx = house_boundary[1];
             this.house_maxz = house_boundary[2];
             this.house_minz = house_boundary[3];
+
             this.volcano_maxx = volcano_boundary[0];
             this.volcano_minx = volcano_boundary[1];
             this.volcano_maxz = volcano_boundary[2];
             this.volcano_minz = volcano_boundary[3];
+
             this.island_maxx = island_boundary[0];
             this.island_minx = island_boundary[1];
             this.island_maxz = island_boundary[2];
