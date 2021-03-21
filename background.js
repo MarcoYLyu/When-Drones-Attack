@@ -105,16 +105,21 @@ export class Background extends Scene {
         // Movement members.
         this.initial_man_transformation = Mat4.translation(0, 0, 10);
         this.current_man_position = vec4(0, 0, 0, 1);
+	this.aliens = [0];
+	this.previous_aliens = [0];
 	this.al_state = Math.random() * 40;
-	this.current_alien_position = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
+	this.aliens[0] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
         this.moving = false;
         this.itr = 0;
 
         // Cutscene status.
         this.cutscenePlayed = false;
         this.cutsceneStart = undefined;
-	    
+
+	this.level = 1;
 	this.score = 0;
+	this.potentialPoints = 100;
+	this.remainingAliens = [1];
     }
 
     Area_xz(x1, z1, x2, z2, x3, z3) {
@@ -164,6 +169,8 @@ export class Background extends Scene {
 
     make_control_panel() {
         this.live_string(box => box.textContent = `Current stage: ${this.cutscenePlayed ? "Defend" : "Cutscene"}`);
+	this.new_line();
+	this.live_string(box => box.textContent = `Level: ${this.level}`);
 	this.new_line();
 	this.live_string(box => box.textContent = `Score: ${this.score}`);
         this.new_line();
@@ -333,8 +340,14 @@ export class Background extends Scene {
         const r = this.radians_per_frame;
         let man_transformation = this.get_man_transformation(context.scratchpad.controls.get_mouse_position(), dt * r, dt * m);
 
-	let angle = Math.random() * 360;
-	let alien_transformation = Mat4.translation(Math.cos(angle), 0, Math.sin(angle));
+	let alien_transformations = [];
+	let angle = 0;
+	for (let i = 0; i < this.aliens.length; i++) {
+		if (this.remainingAliens[i] == 1) {
+			angle = Math.random() * 360;
+			alien_transformations[i] = Mat4.translation(Math.cos(angle), 0, Math.sin(angle));
+		}
+	}
 
         const cur_pos = this.current_man_position;
         const target_pos = this.get_mouse_picking_location(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1), mouse_vec, 0);
@@ -409,20 +422,46 @@ export class Background extends Scene {
             this.previous_man_transformation = man_transformation;
         }
 
-	if (Collision_Helper.has_square_collision(alien_transformation.times(this.current_alien_position), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
+	for (let j = 0; j < this.aliens.length; j++) {
+	if (this.remainingAliens[j] == 1) {
+	if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
 	 || Math.sqrt(posx*posx + posz*posz) > 80) {
             // Do nothing
-	} else if (Collision_Helper.has_square_collision(alien_transformation.times(this.current_alien_position), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
+	} else if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
 	    // Game Over
 	    this.score = 0;
+	    this.aliens = [0];
+	    this.previous_aliens = [0];
+	    this.al_state = Math.random() * 40;
+	    this.aliens[0] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
+	    this.remainingAliens = [1];
+
         } else {
-            this.previous_alien_position = this.current_alien_position;
-	    this.current_alien_position = alien_transformation.times(this.current_alien_position);
+            this.previous_aliens[j] = this.aliens[j];
+	    this.aliens[j] = alien_transformations[j].times(this.aliens[j]);
         }
 
-	if ((posx - this.current_alien_position[0])*(posx - this.current_alien_position[0]) + (posz - this.current_alien_position[2])*(posz - this.current_alien_position[2]) < 25) {
-	    // Success!
-	    this.score = this.score + 100;
+	if ((posx - this.aliens[j][0])*(posx - this.aliens[j][0]) + (posz - this.aliens[j][2])*(posz - this.aliens[j][2]) < 25) {
+	    this.remainingAliens[j] = 0;
+	    let sum = 0;
+	    for (let m = 0; m < this.remainingAliens.length; m++) {
+		sum = sum + this.remainingAliens[m];
+	    }
+	    if (sum == 0) {
+	    this.score = this.score + this.potentialPoints;
+	    this.potentialPoints = this.potentialPoints * 2;
+	    this.level = this.level + 1;
+	    this.aliens.push(0);
+	    this.previous_aliens.push(0);
+	    this.remainingAliens.push(0);
+	    for (let k = 0; k < this.aliens.length; k++) {
+		this.al_state = Math.random() * 40;
+	    	this.aliens[k] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
+		this.remainingAliens[k] = 1;
+	    }
+	    }
+	}
+	}
 	}
 
         // get the transformation for the man
@@ -440,16 +479,21 @@ export class Background extends Scene {
         }
 
 	// draw the alien
+	console.log(this.aliens);
+	for (let l = 0; l < this.aliens.length; l++) {
+	if (this.remainingAliens[l] == 1) {
 	this.shapes.alien.draw(
             context,
             program_state,
-            Mat4.translation(...this.current_alien_position)
+            Mat4.translation(...this.aliens[l])
                 .times(Mat4.scale(...alien_size))
                 .times(Mat4.rotation(alien_angle, 0, 1, 0)),
             this.materials.face.override({
                 color: hex_color("#ff0000"),
             }),
         );
+	}
+	}
 
         // draw the target square
         let temp = target_pos.minus(this.current_man_position);
