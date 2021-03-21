@@ -366,14 +366,53 @@ export class Background extends Scene {
 
         let surface = this.find_Surface(this.surfaces, posx, posz);
         let character_y = this.get_y(surface, posx, posz) + y_base;
-        let cha_trans = Mat4.translation(posx, character_y, posz);
-        if(t % 1 > 0.5) {
-            this.shapes.c1.draw(context, program_state, cha_trans, this.character)
-        } else {
-            this.shapes.c2.draw(context, program_state, cha_trans, this.character)
+        
+        let height_change = character_y - posy;
+
+        /***********************
+         * COLLISION DETECTION *
+         ***********************/
+        if (!this.onlyonce) {
+            this.onlyonce = true;
+            let house_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
+            let volcano_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.volcano, 
+                                                                                   Mat4.translation(-15, 9, -20).times(Mat4.scale(30, 30, 30)));
+            this.house_maxx = house_boundary[0];
+            this.house_minx = house_boundary[1];
+            this.house_maxz = house_boundary[2];
+            this.house_minz = house_boundary[3];
+            this.volcano_maxx = volcano_boundary[0];
+            this.volcano_minx = volcano_boundary[1];
+            this.volcano_maxz = volcano_boundary[2];
+            this.volcano_minz = volcano_boundary[3];
         }
 
-        program_state.set_camera(Mat4.look_at(vec3(camerax, cameray, cameraz), vec3(posx, posy, posz), vec3(0, 1, 0)));
+        if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
+         || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)) {
+            this.initial_man_transformation = this.previous_man_transformation;
+        } else {
+            this.previous_man_transformation = man_transformation;
+        }
+
+        // get the transformation for the man
+        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
+
+        // draw the man
+        if(t % 1 > 0.5) {
+            this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character)
+        } else {
+            this.shapes.c2.draw(context, program_state, cur_man_transformation, this.character)
+        }
+
+        // draw the target square
+        let temp = target_pos.minus(this.current_man_position);
+        if (temp_moving_vec.norm() !== 0.0) {
+            this.shapes.target.draw(context, program_state, Mat4.translation(temp[0], temp[1], temp[2]).times(this.initial_man_transformation)
+                                                                .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                                                                .times(Mat4.translation(0, character_y, 1)), this.materials.roof);
+        }
+
+        program_state.set_camera(Mat4.look_at(vec3(camerax, cameray + height_change, cameraz), vec3(posx, character_y, posz), vec3(0, 1, 0)));
             
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 1000);
@@ -385,32 +424,6 @@ export class Background extends Scene {
         // Draw our core components.
         this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
         this.draw_house(context, program_state, Mat4.translation(8, 0.7, 0));
-
-        /***********************
-         * COLLISION DETECTION *
-         ***********************/
-        if (!this.onlyonce) {
-            this.onlyonce = true;
-            let boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
-            this.house_maxx = boundary[0];
-            this.house_minx = boundary[1];
-            this.house_maxz = boundary[2];
-            this.house_minz = boundary[3];
-        }
-
-        if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
-            this.initial_man_transformation = this.previous_man_transformation;
-        } else {
-            this.previous_man_transformation = man_transformation;
-        }
-        let temp = target_pos.minus(this.current_man_position);
-        //this.shapes.man.draw(context, program_state, this.initial_man_transformation.times(Mat4.scale(0.3, 0.3, 0.3)), this.materials.roof);
-            
-        if (temp_moving_vec.norm() !== 0.0) {
-            this.shapes.target.draw(context, program_state, Mat4.translation(temp[0], temp[1], temp[2]).times(this.initial_man_transformation)
-                                                                .times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
-                                                                .times(Mat4.translation(0, 0, 1)), this.materials.roof);
-        }
     }
 
     async display(context, program_state) {
