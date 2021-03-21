@@ -197,7 +197,7 @@ export class Background extends Scene {
         this.new_line();
         this.key_triggered_button("left", ["d"], () => this.thrust[0] = 1, undefined, () => this.thrust[0] = 0);
         this.new_line();
-        this.key_triggered_button("jump", [" "], () => {
+        this.key_triggered_button("jump to kill", [" "], () => {
             if (!this.rising && !this.falling) {
                 this.jump = true;
             }
@@ -351,7 +351,7 @@ export class Background extends Scene {
         const speed = 0.01;
         const mouse_vec = context.scratchpad.mouse_controls.mouse_vec().normalized();
         const camera_obj_x = 0;
-        const camera_obj_y = 3;
+        const camera_obj_y = 2;
         const camera_obj_z = 8;
 
         const m = this.meters_per_frame;
@@ -470,7 +470,7 @@ export class Background extends Scene {
     for (let j = 0; j < this.aliens.length; j++) {
         if (this.remainingAliens[j] == 1) {
             if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-            || Math.sqrt(posx*posx + posz*posz) > 80) {
+            || (Math.sqrt(posx*posx + posz*posz) > 80)) {
                     // Do nothing
             } else if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
                 // Game Over
@@ -487,7 +487,7 @@ export class Background extends Scene {
                 this.aliens[j] = alien_transformations[j].times(this.aliens[j]);
             }
 
-            if ((posx - this.aliens[j][0])*(posx - this.aliens[j][0]) + (posz - this.aliens[j][2])*(posz - this.aliens[j][2]) < 25) {
+            if ((posx - this.aliens[j][0])*(posx - this.aliens[j][0]) + (posz - this.aliens[j][2])*(posz - this.aliens[j][2]) < 25 && (this.rising || this.falling)) {
                 this.remainingAliens[j] = 0;
                 let sum = 0;
                 for (let m = 0; m < this.remainingAliens.length; m++) {
