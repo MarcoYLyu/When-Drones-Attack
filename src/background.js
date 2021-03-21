@@ -105,6 +105,10 @@ export class Background extends Scene {
         // Movement members.
         this.initial_man_transformation = Mat4.translation(0, 0, 10);
         this.current_man_position = vec4(0, 0, 0, 1);
+        this.aliens = [0];
+        this.previous_aliens = [0];
+        this.al_state = Math.random() * 40;
+        this.aliens[0] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
         this.moving = false;
         this.itr = 0;
         this.angles = {
@@ -123,6 +127,12 @@ export class Background extends Scene {
         // Cutscene status.
         this.cutscenePlayed = false;
         this.cutsceneStart = undefined;
+
+        // Level status.
+        this.level = 1;
+        this.score = 0;
+        this.potentialPoints = 100;
+        this.remainingAliens = [1];
     }
 
     Area_xz(x1, z1, x2, z2, x3, z3) {
@@ -172,6 +182,10 @@ export class Background extends Scene {
 
     make_control_panel() {
         this.live_string(box => box.textContent = `Current stage: ${this.cutscenePlayed ? "Defend" : "Cutscene"}`);
+        this.new_line();
+        this.live_string(box => box.textContent = `Level: ${this.level}`);
+        this.new_line();
+        this.live_string(box => box.textContent = `Score: ${this.score}`);
         this.new_line();
         this.new_line();
         this.key_triggered_button("forward", ["w"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
@@ -344,9 +358,23 @@ export class Background extends Scene {
         const r = this.radians_per_frame;
         let man_transformation = this.get_man_transformation(context.scratchpad.controls.get_mouse_position(), dt * r, dt * m);
 
+        let alien_transformations = [];
+        let angle = 0;
+        for (let i = 0; i < this.aliens.length; i++) {
+            if (this.remainingAliens[i] == 1) {
+                angle = Math.random() * 360;
+                alien_transformations[i] = Mat4.translation(Math.cos(angle), 0, Math.sin(angle));
+            }
+        }
+
         const cur_pos = this.current_man_position;
         const target_pos = this.get_mouse_picking_location(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1), mouse_vec, 0);
         const temp_moving_vec = target_pos.minus(vec4(cur_pos[0], cur_pos[1] + camera_obj_y, cur_pos[2], 1));
+
+        const rotation_speed = 5;
+        const alien_size = vec3(2, 0.75, 3);
+        const alien_position = vec3(8, -1.5 + 5, 0);
+        const alien_angle = (t * rotation_speed) % (2 * Math.PI);
 
         if (context.scratchpad.mouse_controls.click) {
             this.moving_vec = temp_moving_vec;
@@ -416,7 +444,7 @@ export class Background extends Scene {
         /***********************
          * COLLISION DETECTION *
          ***********************/
-        if (!this.onlyonce) {
+         if (!this.onlyonce) {
             this.onlyonce = true;
             let house_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
             let volcano_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.volcano, 
@@ -425,7 +453,6 @@ export class Background extends Scene {
             this.house_minx = house_boundary[1];
             this.house_maxz = house_boundary[2];
             this.house_minz = house_boundary[3];
-
             this.volcano_maxx = volcano_boundary[0];
             this.volcano_minx = volcano_boundary[1];
             this.volcano_maxz = volcano_boundary[2];
@@ -434,17 +461,58 @@ export class Background extends Scene {
 
         if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
          || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-         || Math.sqrt(posx * posx + posz * posz) > 80) {
+     || Math.sqrt(posx*posx + posz*posz) > 80) {
             this.initial_man_transformation = this.previous_man_transformation;
         } else {
             this.previous_man_transformation = man_transformation;
         }
 
+    for (let j = 0; j < this.aliens.length; j++) {
+        if (this.remainingAliens[j] == 1) {
+            if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
+            || Math.sqrt(posx*posx + posz*posz) > 80) {
+                    // Do nothing
+            } else if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
+                // Game Over
+                this.score = 0;
+                this.aliens = [0];
+                this.previous_aliens = [0];
+                this.al_state = Math.random() * 40;
+                this.aliens[0] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
+                this.remainingAliens = [1];
+            } else {
+                this.previous_aliens[j] = this.aliens[j];
+                this.aliens[j] = alien_transformations[j].times(this.aliens[j]);
+            }
+
+            if ((posx - this.aliens[j][0])*(posx - this.aliens[j][0]) + (posz - this.aliens[j][2])*(posz - this.aliens[j][2]) < 25) {
+                this.remainingAliens[j] = 0;
+                let sum = 0;
+                for (let m = 0; m < this.remainingAliens.length; m++) {
+                    sum = sum + this.remainingAliens[m];
+                }
+                if (sum == 0) {
+                    this.score = this.score + this.potentialPoints;
+                    this.potentialPoints = this.potentialPoints * 2;
+                    this.level = this.level + 1;
+                    this.aliens.push(0);
+                    this.previous_aliens.push(0);
+                    this.remainingAliens.push(0);
+                    for (let k = 0; k < this.aliens.length; k++) {
+                        this.al_state = Math.random() * 40;
+                        this.aliens[k] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
+                        this.remainingAliens[k] = 1;
+                    }
+                }
+            }
+        }
+    }
+
         // calculate the angle of the man
-        let angle = this.angles[this.thrust[0] + " " + this.thrust[2]];
+        let man_angle = this.angles[this.thrust[0] + " " + this.thrust[2]];
 
         // get the transformation for the man
-        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0));
+        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(man_angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0));
 
         // draw the man
         if ((this.moving || this.has_used_wasd()) && !this.rising && !this.falling) {
@@ -455,6 +523,23 @@ export class Background extends Scene {
             }
         } else {
             this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character);
+        }
+
+        // draw the alien
+        console.log(this.aliens);
+        for (let l = 0; l < this.aliens.length; l++) {
+            if (this.remainingAliens[l] == 1) {
+            this.shapes.alien.draw(
+                    context,
+                    program_state,
+                    Mat4.translation(...this.aliens[l])
+                        .times(Mat4.scale(...alien_size))
+                        .times(Mat4.rotation(alien_angle, 0, 1, 0)),
+                    this.materials.face.override({
+                        color: hex_color("#ff0000"),
+                    }),
+                );
+            }
         }
 
         // draw the target square
