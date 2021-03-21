@@ -190,7 +190,6 @@ export class Background extends Scene {
     }
 
     check_attack(context, program_state, position, direction, time) {
-        console.log(this.attacks.in_buffer)
         for (let i = 0; i < this.attacks.in_buffer; i++) {
             let cur_x = this.attacks.attack_position[i][0] + 5*(time-this.attacks.attack_time[i])*this.attacks.attack_direction[i][0];
             let cur_y = this.attacks.attack_position[i][1] + 5*(time-this.attacks.attack_time[i])*this.attacks.attack_direction[i][1];
@@ -204,9 +203,7 @@ export class Background extends Scene {
             this.attacks.attack_direction.push(direction);
             this.attacks.attack_time.push(time);
             this.attacks.in_buffer = this.attacks.in_buffer + 1;
-            console.log(this.attacks.in_buffer)
             this.initiate_attack = false;
-            console.log(this.attacks.attack_position[0][0]);
         }
         if (this.attacks.in_buffer > 0) {
             if (time - this.attacks.attack_time[0] > 5) {
@@ -385,17 +382,19 @@ export class Background extends Scene {
         );
         this.draw_house(context, program_state, Mat4.translation(8, 0.7 - house_displacement, 0));
 
-        // Register our island vertices to the program.
-        // Apply scale transformation to island vertices.
-        this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0]*this.island_scale, x[1]*this.island_scale, x[2]*this.island_scale])
-        let surface_indices = this.shapes.island.indices;
-        this.surfaces = []
-        for (let i= 0; i < 979; i+=3) { // surface_indices has 981 items
-            this.surfaces.push([this.island_vertex[surface_indices[i]],
-                this.island_vertex[surface_indices[i + 1]],
-                this.island_vertex[surface_indices[i + 2]]]);
+        if (t > 1.0) {
+            // Register our island vertices to the program.
+            // Apply scale transformation to island vertices.
+            this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0] * this.island_scale, x[1] * this.island_scale, x[2] * this.island_scale])
+            let surface_indices = this.shapes.island.indices;
+            this.surfaces = []
+            for (let i = 0; i < 979; i += 3) { // surface_indices has 981 items
+                this.surfaces.push([this.island_vertex[surface_indices[i]],
+                    this.island_vertex[surface_indices[i + 1]],
+                    this.island_vertex[surface_indices[i + 2]]]);
+            }
+            this.surfaces = this.surfaces.filter(x => x[0][1] > 0 && x[1][1] > 0 && x[2][1] > 0);
         }
-        this.surfaces = this.surfaces.filter(x => x[0][1] > 0 && x[1][1] > 0 && x[2][1] > 0);
 
         // Check if we need to hand off to the game.
         if (t - this.cutsceneStart > 5.0) this.cutscenePlayed = true;
