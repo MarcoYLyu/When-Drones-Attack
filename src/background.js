@@ -337,8 +337,8 @@ export class Background extends Scene {
         const speed = 0.01;
         const mouse_vec = context.scratchpad.mouse_controls.mouse_vec().normalized();
         const camera_obj_x = 0;
-        const camera_obj_y = 2;
-        const camera_obj_z = 6;
+        const camera_obj_y = 3;
+        const camera_obj_z = 12;
 
         const m = this.meters_per_frame;
         const r = this.radians_per_frame;
@@ -444,7 +444,7 @@ export class Background extends Scene {
         let angle = this.angles[this.thrust[0] + " " + this.thrust[2]];
 
         // get the transformation for the man
-        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
+        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0));
 
         // draw the man
         if ((this.moving || this.has_used_wasd()) && !this.rising && !this.falling) {
