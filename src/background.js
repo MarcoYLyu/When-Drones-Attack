@@ -107,6 +107,17 @@ export class Background extends Scene {
         this.current_man_position = vec4(0, 0, 0, 1);
         this.moving = false;
         this.itr = 0;
+        this.angles = {
+            "1 0": 0,
+            "1 -1": Math.PI / 4,
+            "0 -1": Math.PI / 2,
+            "-1 -1": 3 * Math.PI / 4,
+            "-1 0": Math.PI,
+            "-1 1": 5 * Math.PI / 4,
+            "0 1": 3 * Math.PI / 2,
+            "1 1": 7 * Math.PI / 4,
+            "0 0": Math.PI / 2
+        };
 
         // Cutscene status.
         this.cutscenePlayed = false;
@@ -394,8 +405,11 @@ export class Background extends Scene {
             this.previous_man_transformation = man_transformation;
         }
 
+        // calculate the angle of the man
+        let angle = this.angles[this.thrust[0] + " " + this.thrust[2]];
+
         // get the transformation for the man
-        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(Math.PI / 2, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
+        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
 
         // draw the man
         if(t % 1 > 0.5) {
