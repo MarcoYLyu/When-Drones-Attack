@@ -59,6 +59,12 @@ const Collision_Helper = collision_helper.Collision_Helper =
             return false;
         }
 
+        static within_range(point, maxx, minx, maxz, minz) {
+            let x = point[0];
+            let z = point[2];
+            return x < maxx && x > minx && z < maxz && z > minz;
+        }
+
         static get_obj_positions(object, trans) {
             return new Promise(resolve => {
                 setTimeout(() => {

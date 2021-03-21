@@ -388,6 +388,8 @@ export class Background extends Scene {
             let house_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
             let volcano_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.volcano, 
                                                                                    Mat4.translation(-15, 9, -20).times(Mat4.scale(30, 30, 30)));
+            let island_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.island,
+                                                                                  Mat4.scale(this.island_scale, this.island_scale, this.island_scale));
             this.house_maxx = house_boundary[0];
             this.house_minx = house_boundary[1];
             this.house_maxz = house_boundary[2];
@@ -396,11 +398,15 @@ export class Background extends Scene {
             this.volcano_minx = volcano_boundary[1];
             this.volcano_maxz = volcano_boundary[2];
             this.volcano_minz = volcano_boundary[3];
+            this.island_maxx = island_boundary[0];
+            this.island_minx = island_boundary[1];
+            this.island_maxz = island_boundary[2];
+            this.island_minz = island_boundary[3];
         }
 
         if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
          || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-         || Math.sqrt(posx*posx + posz*posz) > 50) {
+         || Math.sqrt(posx * posx + posz * posz) > 80) {
             this.initial_man_transformation = this.previous_man_transformation;
         } else {
             this.previous_man_transformation = man_transformation;
