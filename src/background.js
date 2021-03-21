@@ -133,6 +133,15 @@ export class Background extends Scene {
         this.score = 0;
         this.potentialPoints = 100;
         this.remainingAliens = [1];
+
+        // Attack stack
+        this.initiate_attack = false;
+        this.attacks = {
+            attack_position: [],
+            attack_direction: [],
+            attack_time: [],
+            in_buffer: 0
+        }
     }
 
     Area_xz(x1, z1, x2, z2, x3, z3) {
@@ -180,6 +189,36 @@ export class Background extends Scene {
         return (-d-a*x-c*z) / b;
     }
 
+    check_attack(context, program_state, position, direction, time) {
+        console.log(this.attacks.in_buffer)
+        for (let i = 0; i < this.attacks.in_buffer; i++) {
+            let cur_x = this.attacks.attack_position[i][0] + 5*(time-this.attacks.attack_time[i])*this.attacks.attack_direction[i][0];
+            let cur_y = this.attacks.attack_position[i][1] + 5*(time-this.attacks.attack_time[i])*this.attacks.attack_direction[i][1];
+            let cur_z = this.attacks.attack_position[i][2] + 5*(time-this.attacks.attack_time[i])*this.attacks.attack_direction[i][2];
+            let atta_trans = Mat4.translation(cur_x, cur_y, cur_z);
+            this.shapes.ball.draw(context, program_state, atta_trans, this.materials.phong)
+        }
+        if (this.initiate_attack) {
+            console.log("Initiate attack");
+            this.attacks.attack_position.push(position);
+            this.attacks.attack_direction.push(direction);
+            this.attacks.attack_time.push(time);
+            this.attacks.in_buffer = this.attacks.in_buffer + 1;
+            console.log(this.attacks.in_buffer)
+            this.initiate_attack = false;
+            console.log(this.attacks.attack_position[0][0]);
+        }
+        if (this.attacks.in_buffer > 0) {
+            if (time - this.attacks.attack_time[0] > 5) {
+                this.attacks.attack_position.shift();
+                this.attacks.attack_direction.shift();
+                this.attacks.attack_time.shift();
+                this.attacks.in_buffer -= 1;
+            }
+        }
+
+    }
+
     make_control_panel() {
         this.live_string(box => box.textContent = `Current stage: ${this.cutscenePlayed ? "Defend" : "Cutscene"}`);
         this.new_line();
@@ -201,7 +240,8 @@ export class Background extends Scene {
             if (!this.rising && !this.falling) {
                 this.jump = true;
             }
-        })
+        });
+        this.key_triggered_button("attack", ["j"], () => this.initiate_attack=true);
     }
 
     get_man_transformation(mouse_from_center, radians_per_frame, meters_per_frame, leeway = 30) {
@@ -541,7 +581,7 @@ export class Background extends Scene {
         }
 
         // draw the alien
-        console.log(this.aliens);
+        //console.log(this.aliens);
         for (let l = 0; l < this.aliens.length; l++) {
             if (this.remainingAliens[l] == 1) {
             this.shapes.alien.draw(
@@ -577,6 +617,8 @@ export class Background extends Scene {
         // Draw our core components.
         this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
         this.draw_house(context, program_state, Mat4.translation(8, 0.7, 0));
+        this.check_attack(context, program_state, [posx, character_y, posz],
+            [posx-camerax, 0, posz-cameraz], t)
     }
 
     async display(context, program_state) {
