@@ -113,6 +113,8 @@ export class Background extends Scene {
         // Cutscene status.
         this.cutscenePlayed = false;
         this.cutsceneStart = undefined;
+	    
+	this.score = 0;
     }
 
     Area_xz(x1, z1, x2, z2, x3, z3) {
@@ -162,6 +164,8 @@ export class Background extends Scene {
 
     make_control_panel() {
         this.live_string(box => box.textContent = `Current stage: ${this.cutscenePlayed ? "Defend" : "Cutscene"}`);
+	this.new_line();
+	this.live_string(box => box.textContent = `Score: ${this.score}`);
         this.new_line();
         this.new_line();
         this.key_triggered_button("forward", ["w"], () => this.thrust[2] = -1, undefined, () => this.thrust[2] = 0);
@@ -410,6 +414,7 @@ export class Background extends Scene {
             // Do nothing
 	} else if (Collision_Helper.has_square_collision(alien_transformation.times(this.current_alien_position), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
 	    // Game Over
+	    this.score = 0;
         } else {
             this.previous_alien_position = this.current_alien_position;
 	    this.current_alien_position = alien_transformation.times(this.current_alien_position);
@@ -417,7 +422,7 @@ export class Background extends Scene {
 
 	if ((posx - this.current_alien_position[0])*(posx - this.current_alien_position[0]) + (posz - this.current_alien_position[2])*(posz - this.current_alien_position[2]) < 25) {
 	    // Success!
-	    console.log("Success");
+	    this.score = this.score + 100;
 	}
 
         // get the transformation for the man
