@@ -480,6 +480,8 @@ export class Background extends Scene {
                 this.al_state = Math.random() * 40;
                 this.aliens[0] = vec4(this.al_state, 3.5, Math.sqrt(1600 - this.al_state*this.al_state), 1);
                 this.remainingAliens = [1];
+                this.level = 1;
+                this.potentialPoints = 100;
             } else {
                 this.previous_aliens[j] = this.aliens[j];
                 this.aliens[j] = alien_transformations[j].times(this.aliens[j]);
