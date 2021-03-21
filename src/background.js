@@ -512,7 +512,7 @@ export class Background extends Scene {
         let man_angle = this.angles[this.thrust[0] + " " + this.thrust[2]];
 
         // get the transformation for the man
-        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0))
+        let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(man_angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0))
             .times(Mat4.scale(0.3, 0.3, 0.3));
 
         // draw the man
