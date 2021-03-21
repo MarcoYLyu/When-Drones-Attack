@@ -399,7 +399,8 @@ export class Background extends Scene {
         }
 
         if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
-         || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)) {
+         || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
+         || Math.sqrt(posx*posx + posz*posz) > 50) {
             this.initial_man_transformation = this.previous_man_transformation;
         } else {
             this.previous_man_transformation = man_transformation;
