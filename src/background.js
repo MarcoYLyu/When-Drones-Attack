@@ -341,6 +341,18 @@ export class Background extends Scene {
         );
         this.draw_house(context, program_state, Mat4.translation(8, -1.5 - house_displacement, 0));
 
+        // Register our island vertices to the program.
+        // Apply scale transformation to island vertices.
+        this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0]*this.island_scale, x[1]*this.island_scale, x[2]*this.island_scale])
+        let surface_indices = this.shapes.island.indices;
+        this.surfaces = []
+        for (let i= 0; i < 979; i+=3) { // surface_indices has 981 items
+            this.surfaces.push([this.island_vertex[surface_indices[i]],
+                this.island_vertex[surface_indices[i + 1]],
+                this.island_vertex[surface_indices[i + 2]]]);
+        }
+        this.surfaces = this.surfaces.filter(x => x[0][1] > 0 && x[1][1] > 0 && x[2][1] > 0);
+
         // Check if we need to hand off to the game.
         if (t - this.cutsceneStart > 5.0) this.cutscenePlayed = true;
     }
@@ -590,18 +602,6 @@ export class Background extends Scene {
         // Play the cutscene first.
         if (!this.cutscenePlayed)
             return this.cutscene(context, program_state);
-
-        // Register our island vertices to the program.
-        // Apply scale transformation to island vertices.
-        this.island_vertex = this.shapes.island.arrays.position.map(x => [x[0]*this.island_scale, x[1]*this.island_scale, x[2]*this.island_scale])
-        let surface_indices = this.shapes.island.indices;
-        this.surfaces = []
-        for (let i= 0; i < 979; i+=3) { // surface_indices has 981 items
-            this.surfaces.push([this.island_vertex[surface_indices[i]],
-                this.island_vertex[surface_indices[i + 1]],
-                this.island_vertex[surface_indices[i + 2]]]);
-        }
-        this.surfaces = this.surfaces.filter(x => x[0][1] > 0 && x[1][1] > 0 && x[2][1] > 0);
 
         // Display our game mode.
         this.game(context, program_state);
