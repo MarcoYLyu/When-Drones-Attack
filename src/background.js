@@ -482,7 +482,7 @@ export class Background extends Scene {
     for (let j = 0; j < this.aliens.length; j++) {
         if (this.remainingAliens[j] == 1) {
             if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-            || (Math.sqrt(posx*posx + posz*posz) > 80)) {
+            || (Math.sqrt(posx*posx + posz*posz) > 75)) {
                     // Do nothing
             } else if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
                 // Game Over
