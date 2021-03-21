@@ -413,7 +413,7 @@ export class Background extends Scene {
         let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
 
         // draw the man
-        if (this.has_used_wasd()) {
+        if (this.moving || this.has_used_wasd()) {
             if(t % 0.1 > 0.05) {
                 this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character)
             } else {
