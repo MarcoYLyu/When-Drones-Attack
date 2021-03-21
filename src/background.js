@@ -71,6 +71,11 @@ export class Background extends Scene {
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/sky.jpg")
             }),
+            cracked: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/cracks.jpg")
+            }),
         }
         this.vol = new Material(new Textured_Phong(), {
             color: hex_color("#385101"), //#208f52
@@ -258,10 +263,12 @@ export class Background extends Scene {
     }
 
     /**
+     * Draw a composite-textured house.
      * 
      * @param {Matrix} base_translation Some base translation to move the entire home by.
+     * @param {Boolean} destroyed Whether or not the home should be rendered in its "destroyed" phase.
      */
-    draw_house(context, program_state, base_translation = Mat4.identity()) {
+    draw_house(context, program_state, base_translation = Mat4.identity(), destroyed = false) {
         let roof_transform = Mat4.scale(1.5, 1, 2)
         .times(Mat4.translation(0, 1, 0))
         .times(Mat4.rotation(Math.PI / 2, 0, 0, 1))
@@ -273,20 +280,22 @@ export class Background extends Scene {
         let part2_transform = Mat4.translation(0.75, -0.5, 3).times(Mat4.scale(1.5, 0.5, 0.5));
         let part3_transform = Mat4.rotation(Math.PI / 2, 0, 1, 0).times(Mat4.scale(1.5, 0.5, 0.7)).times(Mat4.translation(0, -1, 3));
 
+        // If the house has been destroyed, then draw it with the cracked
+        const face_material = destroyed ? this.materials.cracked : this.materials.face;
         this.shapes.roof.draw(context, program_state, base_translation.times(roof_transform), this.materials.roof);
-        this.shapes.face.draw(context, program_state, base_translation.times(Mat4.translation(0, 0, 2).times(roof_transform)), this.materials.face);
-        this.shapes.face.draw(context, program_state, base_translation.times(Mat4.translation(0, 0, -2).times(roof_transform)), this.materials.face);
-        this.shapes.block.draw(context, program_state, base_translation.times(block_transform), this.materials.face);
+        this.shapes.face.draw(context, program_state, base_translation.times(Mat4.translation(0, 0, 2).times(roof_transform)), face_material);
+        this.shapes.face.draw(context, program_state, base_translation.times(Mat4.translation(0, 0, -2).times(roof_transform)), face_material);
+        this.shapes.block.draw(context, program_state, base_translation.times(block_transform), face_material);
 
         this.shapes.roof.draw(context, program_state, base_translation.times(part2_transform.times(roof_transform)), this.materials.roof);
-        this.shapes.face.draw(context, program_state, base_translation.times(part2_transform.times(roof_transform).times(Mat4.translation(0, 0, 0.5))), this.materials.face);
-        this.shapes.face.draw(context, program_state, base_translation.times(part2_transform.times(roof_transform).times(Mat4.translation(0, 0, -0.5))), this.materials.face);
-        this.shapes.block.draw(context, program_state, base_translation.times(part2_transform.times(block_transform)), this.materials.face);
+        this.shapes.face.draw(context, program_state, base_translation.times(part2_transform.times(roof_transform).times(Mat4.translation(0, 0, 0.5))), face_material);
+        this.shapes.face.draw(context, program_state, base_translation.times(part2_transform.times(roof_transform).times(Mat4.translation(0, 0, -0.5))), face_material);
+        this.shapes.block.draw(context, program_state, base_translation.times(part2_transform.times(block_transform)), face_material);
 
         this.shapes.roof.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform)), this.materials.roof);
-        this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, 0.5))), this.materials.face);
-        this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, -0.5))), this.materials.face);
-        this.shapes.block.draw(context, program_state, base_translation.times(part3_transform.times(block_transform)), this.materials.face);
+        this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, 0.5))), face_material);
+        this.shapes.face.draw(context, program_state, base_translation.times(part3_transform.times(roof_transform).times(Mat4.translation(0, 0, -0.5))), face_material);
+        this.shapes.block.draw(context, program_state, base_translation.times(part3_transform.times(block_transform)), face_material);
     }
 
     // Introductory cutscene. Alien destroys the player's house.
@@ -325,10 +334,15 @@ export class Background extends Scene {
                 color: hex_color("#ff0000"),
             }),
         );
-        this.draw_house(context, program_state, Mat4.translation(8, -1.5 - house_displacement, 0));
+
+        // If 5s have passed, the home is destroyed and no longer moving.
+        if (t - this.cutsceneStart < 5.0)
+            this.draw_house(context, program_state, Mat4.translation(8, -1.5 - house_displacement, 0));
+        else
+            this.draw_house(context, program_state, Mat4.translation(8, -1.5, 0), true);
 
         // Check if we need to hand off to the game.
-        if (t - this.cutsceneStart > 5.0) this.cutscenePlayed = true;
+        if (t - this.cutsceneStart > 7.5) this.cutscenePlayed = true;
     }
 
     // The actual "game". Player moves around, can use mouse-picked movement, etc.
@@ -474,9 +488,9 @@ export class Background extends Scene {
         const light_position = light_trans.times(vec4(-50, 30, 0, 1));
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)];
 
-        // Draw our core components.
+        // Draw our core components. The house has been destroyed.
         this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
-        this.draw_house(context, program_state, Mat4.translation(8, 0.7, 0));
+        this.draw_house(context, program_state, Mat4.translation(8, 0.7, 0), true);
     }
 
     async display(context, program_state) {
