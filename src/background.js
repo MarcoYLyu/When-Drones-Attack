@@ -413,10 +413,14 @@ export class Background extends Scene {
         let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
 
         // draw the man
-        if(t % 1 > 0.5) {
-            this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character)
+        if (this.has_used_wasd()) {
+            if(t % 0.1 > 0.05) {
+                this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character)
+            } else {
+                this.shapes.c2.draw(context, program_state, cur_man_transformation, this.character)
+            }
         } else {
-            this.shapes.c2.draw(context, program_state, cur_man_transformation, this.character)
+            this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character);
         }
 
         // draw the target square
