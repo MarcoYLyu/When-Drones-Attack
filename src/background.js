@@ -240,6 +240,10 @@ export class Background extends Scene {
         return !this.thrust.every(e => e == 0);
     }
 
+    out_of_bound(x, z, r) {
+        return Math.sqrt(x * x + z * z) > r;
+    }
+
     /**
      * 
      * @param {Matrix} base_translation Some **translation** to move the entire island by.
@@ -387,6 +391,7 @@ export class Background extends Scene {
         const alien_size = vec3(2, 0.75, 3);
         const alien_position = vec3(8, -1.5 + 5, 0);
         const alien_angle = (t * rotation_speed) % (2 * Math.PI);
+        const island_radius = 80;
 
         if (context.scratchpad.mouse_controls.click) {
             this.moving_vec = temp_moving_vec;
@@ -473,7 +478,7 @@ export class Background extends Scene {
 
         if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
          || Collision_Helper.has_square_collision(this.current_man_position, this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-     || Math.sqrt(posx*posx + posz*posz) > 80) {
+     || this.out_of_bound(posx, posz, island_radius)) {
             this.initial_man_transformation = this.previous_man_transformation;
         } else {
             this.previous_man_transformation = man_transformation;
@@ -482,7 +487,7 @@ export class Background extends Scene {
     for (let j = 0; j < this.aliens.length; j++) {
         if (this.remainingAliens[j] == 1) {
             if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.volcano_maxx, this.volcano_minx, this.volcano_maxz, this.volcano_minz, 3)
-            || (Math.sqrt(posx*posx + posz*posz) > 75)) {
+            || this.out_of_bound(this.aliens[j][0], this.aliens[j][2], island_radius)) {
                     // Do nothing
             } else if (Collision_Helper.has_square_collision(alien_transformations[j].times(this.aliens[j]), this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)) {
                 // Game Over
@@ -541,7 +546,6 @@ export class Background extends Scene {
         }
 
         // draw the alien
-        console.log(this.aliens);
         for (let l = 0; l < this.aliens.length; l++) {
             if (this.remainingAliens[l] == 1) {
             this.shapes.alien.draw(
