@@ -389,17 +389,21 @@ export class Background extends Scene {
             this.jump = false;
             this.jump_start_time = t;
         } else if (this.rising) {
+            // if the man is rising
             let diff_time = t - this.jump_start_time;
             if (this.cur_height >= jump_distance) {
                 this.falling = true;
                 this.rising = false;
                 this.fall_start_time = t;
+                this.cur_height = jump_distance;
             } else {
                 this.cur_height = 2 * jump_distance * diff_time - 0.5 * diff_time * diff_time
             }
         } else if (this.falling) {
+            // if the man is falling
             let diff_time = t - this.fall_start_time;
             if (this.cur_height <= 0.0) {
+                this.cur_height = 0;
                 this.falling = false;
             } else {
                 this.cur_height -= 0.5 * diff_time * diff_time;
@@ -417,8 +421,6 @@ export class Background extends Scene {
             let house_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.house, Mat4.translation(8, 0, 0));
             let volcano_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.volcano, 
                                                                                    Mat4.translation(-15, 9, -20).times(Mat4.scale(30, 30, 30)));
-            let island_boundary = await Collision_Helper.get_xz_boundaries_helper(this.shapes.island,
-                                                                                  Mat4.scale(this.island_scale, this.island_scale, this.island_scale));
             this.house_maxx = house_boundary[0];
             this.house_minx = house_boundary[1];
             this.house_maxz = house_boundary[2];
@@ -428,11 +430,6 @@ export class Background extends Scene {
             this.volcano_minx = volcano_boundary[1];
             this.volcano_maxz = volcano_boundary[2];
             this.volcano_minz = volcano_boundary[3];
-
-            this.island_maxx = island_boundary[0];
-            this.island_minx = island_boundary[1];
-            this.island_maxz = island_boundary[2];
-            this.island_minz = island_boundary[3];
         }
 
         if (Collision_Helper.has_square_collision(this.current_man_position, this.house_maxx, this.house_minx, this.house_maxz, this.house_minz)
@@ -450,7 +447,7 @@ export class Background extends Scene {
         let cur_man_transformation = this.initial_man_transformation.times(Mat4.rotation(angle, 0, 1, 0)).times(Mat4.translation(0, height_change, 0)).times(Mat4.scale(0.3, 0.3, 0.3));
 
         // draw the man
-        if (this.moving || this.has_used_wasd()) {
+        if ((this.moving || this.has_used_wasd()) && !this.rising && !this.falling) {
             if(t % 0.1 > 0.05) {
                 this.shapes.c1.draw(context, program_state, cur_man_transformation, this.character)
             } else {
