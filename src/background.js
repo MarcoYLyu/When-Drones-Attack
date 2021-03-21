@@ -318,7 +318,7 @@ export class Background extends Scene {
         // Controls the rotation and position of the alien.
         const rotation_speed = 5;
         const alien_size = vec3(2, 0.75, 3);
-        const alien_position = vec3(8, -1.5 + 5, 0);
+        const alien_position = vec3(8, 0.7 + 5, 0);
         const alien_angle = (t * rotation_speed) % (2 * Math.PI);
 
         // We have to fix our camera to the action.
@@ -339,7 +339,7 @@ export class Background extends Scene {
                 color: hex_color("#ff0000"),
             }),
         );
-        this.draw_house(context, program_state, Mat4.translation(8, -1.5 - house_displacement, 0));
+        this.draw_house(context, program_state, Mat4.translation(8, 0.7 - house_displacement, 0));
 
         // Register our island vertices to the program.
         // Apply scale transformation to island vertices.
@@ -597,7 +597,7 @@ export class Background extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)];
 
         // The island is a constant fixture in our scene.
-        this.draw_island(context, program_state, Mat4.translation(0, -10, 0));
+        this.draw_island(context, program_state, Mat4.translation(0, -5, 0));
 
         // Play the cutscene first.
         if (!this.cutscenePlayed)
