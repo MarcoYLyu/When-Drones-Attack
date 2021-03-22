@@ -140,7 +140,8 @@ export class Background extends Scene {
             attack_position: [],
             attack_direction: [],
             attack_time: [],
-            in_buffer: 0
+            in_buffer: 0,
+            attack_jump: [],
         }
     }
 
@@ -203,6 +204,7 @@ export class Background extends Scene {
             this.attacks.attack_direction.push(direction);
             this.attacks.attack_time.push(time);
             this.attacks.in_buffer = this.attacks.in_buffer + 1;
+            this.attacks.attack_jump.push(this.rising || this.falling);
             this.initiate_attack = false;
         }
         if (this.attacks.in_buffer > 0) {
@@ -546,7 +548,7 @@ export class Background extends Scene {
             for (let i = 0; i < this.attacks.in_buffer; i++) {
                 let cur_x = this.attacks.attack_position[i][0] + 5*(t-this.attacks.attack_time[i])*this.attacks.attack_direction[i][0];
                 let cur_z = this.attacks.attack_position[i][2] + 5*(t-this.attacks.attack_time[i])*this.attacks.attack_direction[i][2];
-                if ((cur_x - this.aliens[j][0])*(cur_x - this.aliens[j][0]) + (cur_z - this.aliens[j][2])*(cur_z - this.aliens[j][2]) < 25 && (this.falling || this.rising)) {
+                if ((cur_x - this.aliens[j][0])*(cur_x - this.aliens[j][0]) + (cur_z - this.aliens[j][2])*(cur_z - this.aliens[j][2]) < 25 && this.attacks.attack_jump[i]) {
                     this.remainingAliens[j] = 0;
                     let sum = 0;
                     for (let m = 0; m < this.remainingAliens.length; m++) {
